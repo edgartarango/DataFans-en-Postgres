@@ -15,7 +15,7 @@ public class Conexion {
     String usuario ="postgres";
     String contrasenia = "postgres"; // Verifica que sea tu clave real
     String ip= "localhost";
-    String bd="datafans"; // Cambiado a tu BD actual
+    String bd="DataFans"; // Cambiado a tu BD actual
     String puerto = "5432";
 
     String cadena ="jdbc:postgresql://"+ip+":"+puerto+"/"+bd;

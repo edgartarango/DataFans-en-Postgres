@@ -1,6 +1,9 @@
+com\mycompany\datafans\Sus$1.class
+com\mycompany\datafans\ComboItem.class
 com\mycompany\datafans\Login$1.class
 com\mycompany\datafans\DetalleCompra.class
 com\mycompany\datafans\DataFans.class
+com\mycompany\datafans\Artista$1.class
 com\mycompany\datafans\Cont.class
 com\mycompany\datafans\Pago.class
 com\mycompany\datafans\Ben.class
@@ -12,6 +15,7 @@ com\mycompany\datafans\Fan.class
 com\mycompany\datafans\MemBen.class
 com\mycompany\datafans\Compra.class
 com\mycompany\datafans\Prod.class
+com\mycompany\datafans\Sus$2.class
 com\mycompany\datafans\Sus.class
 com\mycompany\datafans\Login.class
 com\mycompany\datafans\Artista.class

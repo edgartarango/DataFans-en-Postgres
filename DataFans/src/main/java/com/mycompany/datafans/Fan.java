@@ -81,6 +81,8 @@ public class Fan extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         tbFan = new javax.swing.JTable();
 
+        setTitle("Fan");
+
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Fan", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
         jPanel1.setPreferredSize(new java.awt.Dimension(330, 0));
 
@@ -342,7 +344,7 @@ public class Fan extends javax.swing.JFrame {
         }
 
         // 2. SI PASA LA VALIDACIÓN, PROCEDE CON EL UPDATE
-        String sql = "UPDATE Usuario.Fan SET NombreFan = ?, Telefono = ?, Correo = ? WHERE ID_fan = ?;";
+      String sql = "UPDATE Usuario.Fan SET NombreFan = ?, Telefono = ?, Email = ? WHERE ID_fan = ?;";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nombre);
             ps.setString(2, telefono);
