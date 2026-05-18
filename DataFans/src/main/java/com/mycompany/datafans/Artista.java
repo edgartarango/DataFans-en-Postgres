@@ -24,6 +24,7 @@ public class Artista extends javax.swing.JFrame {
     public Artista() {
         initComponents();
         cargarArtistas();
+        limpiarCampos();
     }
 
     /**
