@@ -22,6 +22,7 @@ public class Fan extends javax.swing.JFrame {
      */
     public Fan() {
         initComponents();
+        cargarFans();
     }
 
     private void cargarFans() {

@@ -66,10 +66,15 @@
                       <Component id="jLabel2" alignment="0" min="-2" pref="101" max="-2" attributes="0"/>
                       <Component id="jLabel3" alignment="0" min="-2" pref="60" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="txtTelefono" min="-2" pref="201" max="-2" attributes="0"/>
-                      <Component id="txtNombreFan" min="-2" pref="201" max="-2" attributes="0"/>
+                      <Group type="102" attributes="0">
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="txtNombre" min="-2" pref="201" max="-2" attributes="0"/>
+                      </Group>
+                      <Group type="102" alignment="1" attributes="0">
+                          <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
+                          <Component id="cmbPais" min="-2" pref="202" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
                   <EmptySpace max="32767" attributes="0"/>
               </Group>
@@ -89,12 +94,12 @@
                   <EmptySpace min="5" pref="5" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="jLabel2" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
-                      <Component id="txtNombreFan" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="txtNombre" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="jLabel3" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
-                      <Component id="txtTelefono" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmbPais" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
@@ -118,9 +123,7 @@
             <Property name="text" type="java.lang.String" value="Pa&#xed;s"/>
           </Properties>
         </Component>
-        <Component class="javax.swing.JTextField" name="txtNombreFan">
-        </Component>
-        <Component class="javax.swing.JTextField" name="txtTelefono">
+        <Component class="javax.swing.JTextField" name="txtNombre">
         </Component>
         <Component class="javax.swing.JButton" name="btnMod">
           <Properties>
@@ -145,6 +148,77 @@
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnBajaActionPerformed"/>
           </Events>
+        </Component>
+        <Component class="javax.swing.JComboBox" name="cmbPais">
+          <Properties>
+            <Property name="maximumRowCount" type="int" value="100"/>
+            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+              <StringArray count="59">
+                <StringItem index="0" value="Alemania"/>
+                <StringItem index="1" value="Argentina"/>
+                <StringItem index="2" value="Australia"/>
+                <StringItem index="3" value="Austria"/>
+                <StringItem index="4" value="B&#xe9;lgica"/>
+                <StringItem index="5" value="Belice"/>
+                <StringItem index="6" value="Bolivia"/>
+                <StringItem index="7" value="Brasil"/>
+                <StringItem index="8" value="Bulgaria"/>
+                <StringItem index="9" value="Canad&#xe1;"/>
+                <StringItem index="10" value="Chile"/>
+                <StringItem index="11" value="China"/>
+                <StringItem index="12" value="Colombia"/>
+                <StringItem index="13" value="Corea del Sur"/>
+                <StringItem index="14" value="Costa Rica"/>
+                <StringItem index="15" value="Croacia"/>
+                <StringItem index="16" value="Cuba"/>
+                <StringItem index="17" value="Dinamarca"/>
+                <StringItem index="18" value="Dominica"/>
+                <StringItem index="19" value="Ecuador"/>
+                <StringItem index="20" value="Egipto"/>
+                <StringItem index="21" value="El Salvador"/>
+                <StringItem index="22" value="Espa&#xf1;a"/>
+                <StringItem index="23" value="Estados Unidos"/>
+                <StringItem index="24" value="Francia"/>
+                <StringItem index="25" value="Guatemala"/>
+                <StringItem index="26" value="Honduras"/>
+                <StringItem index="27" value="Hungr&#xed;a"/>
+                <StringItem index="28" value="India"/>
+                <StringItem index="29" value="Indonesia"/>
+                <StringItem index="30" value="Ir&#xe1;n"/>
+                <StringItem index="31" value="Italia"/>
+                <StringItem index="32" value="Jamaica"/>
+                <StringItem index="33" value="Jap&#xf3;n"/>
+                <StringItem index="34" value="Kenia"/>
+                <StringItem index="35" value="Madagascar"/>
+                <StringItem index="36" value="M&#xe9;xico"/>
+                <StringItem index="37" value="Nepal"/>
+                <StringItem index="38" value="Nicaragua"/>
+                <StringItem index="39" value="N&#xed;ger"/>
+                <StringItem index="40" value="Nigeria"/>
+                <StringItem index="41" value="Noruega"/>
+                <StringItem index="42" value="Nueva Zelanda"/>
+                <StringItem index="43" value="Panam&#xe1;"/>
+                <StringItem index="44" value="Pap&#xfa;a Nueva Guinea"/>
+                <StringItem index="45" value="Paraguay"/>
+                <StringItem index="46" value="Per&#xfa;"/>
+                <StringItem index="47" value="Polonia"/>
+                <StringItem index="48" value="Portugal"/>
+                <StringItem index="49" value="Reino Unido"/>
+                <StringItem index="50" value="Rumania"/>
+                <StringItem index="51" value="Rusia"/>
+                <StringItem index="52" value="Singapur"/>
+                <StringItem index="53" value="Suecia"/>
+                <StringItem index="54" value="Suiza"/>
+                <StringItem index="55" value="Turqu&#xed;a"/>
+                <StringItem index="56" value="Ucrania"/>
+                <StringItem index="57" value="Uruguay"/>
+                <StringItem index="58" value="Venezuela"/>
+              </StringArray>
+            </Property>
+          </Properties>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+          </AuxValues>
         </Component>
       </SubComponents>
     </Container>
@@ -196,6 +270,9 @@
                   <TableHeader reorderingAllowed="true" resizingAllowed="true"/>
                 </Property>
               </Properties>
+              <Events>
+                <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="tbArtMouseClicked"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>

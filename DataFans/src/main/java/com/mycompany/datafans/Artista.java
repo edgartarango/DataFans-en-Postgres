@@ -9,6 +9,11 @@ package com.mycompany.datafans;
  *
  * @author Jacky09
  */
+
+import java.sql.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.JOptionPane;
+
 public class Artista extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Artista.class.getName());
@@ -18,6 +23,7 @@ public class Artista extends javax.swing.JFrame {
      */
     public Artista() {
         initComponents();
+        cargarArtistas();
     }
 
     /**
@@ -32,11 +38,11 @@ public class Artista extends javax.swing.JFrame {
         jPanelArt = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        txtNombreFan = new javax.swing.JTextField();
-        txtTelefono = new javax.swing.JTextField();
+        txtNombre = new javax.swing.JTextField();
         btnMod = new javax.swing.JButton();
         btnAlta = new javax.swing.JButton();
         btnBaja = new javax.swing.JButton();
+        cmbPais = new javax.swing.JComboBox<>();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tbArt = new javax.swing.JTable();
@@ -57,6 +63,9 @@ public class Artista extends javax.swing.JFrame {
         btnBaja.setText("Baja");
         btnBaja.addActionListener(this::btnBajaActionPerformed);
 
+        cmbPais.setMaximumRowCount(100);
+        cmbPais.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Alemania", "Argentina", "Australia", "Austria", "Bélgica", "Belice", "Bolivia", "Brasil", "Bulgaria", "Canadá", "Chile", "China", "Colombia", "Corea del Sur", "Costa Rica", "Croacia", "Cuba", "Dinamarca", "Dominica", "Ecuador", "Egipto", "El Salvador", "España", "Estados Unidos", "Francia", "Guatemala", "Honduras", "Hungría", "India", "Indonesia", "Irán", "Italia", "Jamaica", "Japón", "Kenia", "Madagascar", "México", "Nepal", "Nicaragua", "Níger", "Nigeria", "Noruega", "Nueva Zelanda", "Panamá", "Papúa Nueva Guinea", "Paraguay", "Perú", "Polonia", "Portugal", "Reino Unido", "Rumania", "Rusia", "Singapur", "Suecia", "Suiza", "Turquía", "Ucrania", "Uruguay", "Venezuela" }));
+
         javax.swing.GroupLayout jPanelArtLayout = new javax.swing.GroupLayout(jPanelArt);
         jPanelArt.setLayout(jPanelArtLayout);
         jPanelArtLayout.setHorizontalGroup(
@@ -66,10 +75,13 @@ public class Artista extends javax.swing.JFrame {
                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txtTelefono, javax.swing.GroupLayout.PREFERRED_SIZE, 201, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtNombreFan, javax.swing.GroupLayout.PREFERRED_SIZE, 201, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanelArtLayout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtNombre, javax.swing.GroupLayout.PREFERRED_SIZE, 201, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelArtLayout.createSequentialGroup()
+                        .addGap(5, 5, 5)
+                        .addComponent(cmbPais, javax.swing.GroupLayout.PREFERRED_SIZE, 202, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(jPanelArtLayout.createSequentialGroup()
                 .addComponent(btnAlta, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -85,11 +97,11 @@ public class Artista extends javax.swing.JFrame {
                 .addGap(5, 5, 5)
                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtNombreFan, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtNombre, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(6, 6, 6)
                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtTelefono, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(cmbPais, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnMod)
@@ -111,6 +123,11 @@ public class Artista extends javax.swing.JFrame {
 
             }
         ));
+        tbArt.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tbArtMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(tbArt);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -156,16 +173,179 @@ public class Artista extends javax.swing.JFrame {
 
     private void btnModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModActionPerformed
         // TODO add your handling code here:
+        int fila = tbArt.getSelectedRow();
+        if (fila < 0) {
+            JOptionPane.showMessageDialog(null, "Por favor, seleccione un artista de la lista para poder modificarlo.", 
+                    "Ninguna Selección", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String nombre = txtNombre.getText().trim();
+        String pais = (cmbPais.getSelectedItem() != null) ? cmbPais.getSelectedItem().toString() : "";
+        long id = Long.parseLong(tbArt.getValueAt(fila, 0).toString());
+
+        if (nombre.isEmpty() || pais.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Por favor, complete todos los campos requeridos.", 
+                    "Campos Incompletos", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Conexion objetoConexion = new Conexion();
+        try (Connection conn = objetoConexion.establecerConexion()) {
+            // Validar que el nuevo nombre no lo tenga OTR0 artista (excluyendo el actual mediante su ID)
+            String valSql = "SELECT COUNT(*) FROM Usuario.Artista WHERE Nombre_Artista = ? AND ID_artista <> ?;";
+            PreparedStatement psVal = conn.prepareStatement(valSql);
+            psVal.setString(1, nombre);
+            psVal.setLong(2, id);
+            ResultSet rs = psVal.executeQuery();
+
+            if (rs.next() && rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(null, "Ya existe otro artista con ese nombre.\nPor favor, intente con otro.", 
+                        "Registro Duplicado", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Ejecutar la actualización
+            String sql = "UPDATE Usuario.Artista SET Nombre_Artista=?, Pais=? WHERE ID_artista=?;";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, nombre);
+            ps.setString(2, pais);
+            ps.setLong(3, id);
+
+            ps.executeUpdate();
+            JOptionPane.showMessageDialog(null, "Los datos del artista se han actualizado correctamente.");
+            cargarArtistas();
+            limpiarCampos();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "No se pudieron actualizar los datos.\nDetalle técnico: " + e.toString(), 
+                    "Error al Actualizar", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btnModActionPerformed
 
     private void btnAltaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAltaActionPerformed
         // TODO add your handling code here:
+        String nombre = txtNombre.getText().trim();
+        // Validamos que se haya seleccionado un elemento en el Combo
+        String pais = (cmbPais.getSelectedItem() != null) ? cmbPais.getSelectedItem().toString() : "";
+        java.sql.Date fecha = new java.sql.Date(System.currentTimeMillis());
+
+        if (nombre.isEmpty() || pais.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Por favor, complete todos los campos requeridos:\n\n• Nombre del artista\n• País de origen", 
+                    "Campos Incompletos", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Conexion objetoConexion = new Conexion();
+        try (Connection conn = objetoConexion.establecerConexion()) {
+            // Validar si el artista ya existe en la base de datos
+            String valSql = "SELECT COUNT(*) FROM Usuario.Artista WHERE Nombre_Artista = ?;";
+            PreparedStatement psVal = conn.prepareStatement(valSql);
+            psVal.setString(1, nombre);
+            ResultSet rs = psVal.executeQuery();
+
+            if (rs.next() && rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(null, "Ya existe un artista registrado con ese nombre.\nPor favor, verifique el nombre e intente nuevamente.", 
+                        "Registro Duplicado", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Insertar registro si pasa la validación
+            String sql = "INSERT INTO Usuario.Artista (Nombre_Artista, Pais, Fecha_registro) VALUES (?, ?, ?);";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, nombre);
+            ps.setString(2, pais);
+            ps.setDate(3, fecha);
+
+            ps.executeUpdate();
+            //JOptionPane.showMessageDialog(null, "El artista se ha registrado con éxito.");
+            cargarArtistas();
+            limpiarCampos();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "No se pudo completar el registro.\nDetalle técnico: " + e.toString(), 
+                    "Error al Guardar", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btnAltaActionPerformed
 
     private void btnBajaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBajaActionPerformed
         // TODO add your handling code here:
+        int fila = tbArt.getSelectedRow();
+        if (fila < 0) {
+            JOptionPane.showMessageDialog(null, "Por favor, seleccione un artista de la lista para poder eliminarlo.", 
+                    "Ninguna Selección", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        long id = Long.parseLong(tbArt.getValueAt(fila, 0).toString());
+        int confirm= JOptionPane.YES_OPTION;
+        /*confirm = JOptionPane.showConfirmDialog(null, 
+                "¿Está seguro de que desea eliminar este artista?\n\nEsta acción no se puede deshacer y se eliminarán también todas las suscripciones asociadas.", 
+                "Confirmar Eliminación", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        */
+        if (confirm == JOptionPane.YES_OPTION) {
+            Conexion objetoConexion = new Conexion();
+            String sql = "DELETE FROM Usuario.Artista WHERE ID_artista = ?;";
+            try (Connection conn = objetoConexion.establecerConexion();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, id);
+                ps.executeUpdate();
+
+                //JOptionPane.showMessageDialog(null, "El artista se ha eliminado correctamente del sistema.");
+                cargarArtistas();
+                limpiarCampos();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "No se pudo eliminar el artista.\nDetalle técnico: " + e.toString(), 
+                        "Error al Eliminar", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }//GEN-LAST:event_btnBajaActionPerformed
 
+    private void tbArtMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbArtMouseClicked
+        // TODO add your handling code here:
+        int fila = tbArt.getSelectedRow();
+        if (fila >= 0) {
+            // Pasamos el nombre al cuadro de texto
+            txtNombre.setText(tbArt.getValueAt(fila, 1).toString());
+
+            // Buscamos y seleccionamos el país en el JComboBox
+            String paisSeleccionado = tbArt.getValueAt(fila, 2).toString();
+            cmbPais.setSelectedItem(paisSeleccionado);
+        }
+    }//GEN-LAST:event_tbArtMouseClicked
+
+    private void cargarArtistas() {
+    Conexion objetoConexion = new Conexion();
+    DefaultTableModel modelo = new DefaultTableModel();
+    
+    modelo.addColumn("ID Artista");
+    modelo.addColumn("Nombre");
+    modelo.addColumn("País");
+    modelo.addColumn("Fecha Registro");
+    
+    tbArt.setModel(modelo);
+    String sql = "SELECT * FROM Usuario.Artista;";
+    
+    try (Connection conn = objetoConexion.establecerConexion();
+         Statement st = conn.createStatement();
+         ResultSet rs = st.executeQuery(sql)) {
+        
+        while (rs.next()) {
+            Object[] datos = new Object[4];
+            datos[0] = rs.getLong("ID_artista");
+            datos[1] = rs.getString("Nombre_Artista");
+            datos[2] = rs.getString("Pais");
+            datos[3] = rs.getDate("Fecha_registro");
+            modelo.addRow(datos);
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al cargar artistas: " + e.toString());
+    }
+    }
+    
+    private void limpiarCampos() {
+    txtNombre.setText("");
+    cmbPais.setSelectedIndex(-1); // Deselecciona el país dejando el combo en blanco
+    }
     /**
      * @param args the command line arguments
      */
@@ -195,13 +375,13 @@ public class Artista extends javax.swing.JFrame {
     private javax.swing.JButton btnAlta;
     private javax.swing.JButton btnBaja;
     private javax.swing.JButton btnMod;
+    private javax.swing.JComboBox<String> cmbPais;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanelArt;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable tbArt;
-    private javax.swing.JTextField txtNombreFan;
-    private javax.swing.JTextField txtTelefono;
+    private javax.swing.JTextField txtNombre;
     // End of variables declaration//GEN-END:variables
 }
