@@ -88,7 +88,7 @@ public class Fan extends javax.swing.JFrame {
 
         jLabel2.setText("Nombre Fan");
 
-        jLabel3.setText("Telefono");
+        jLabel3.setText("Teléfono");
 
         txtNombreFan.addActionListener(this::txtNombreFanActionPerformed);
 
@@ -232,15 +232,27 @@ public class Fan extends javax.swing.JFrame {
     Conexion objetoConexion = new Conexion();
     try (Connection conn = objetoConexion.establecerConexion()) {
         // Validación de duplicados
-        String queryValidacion = "SELECT COUNT(*) FROM Usuario.Fan WHERE Telefono = ? OR Email = ?";
-        PreparedStatement psVal = conn.prepareStatement(queryValidacion);
-        psVal.setString(1, telefono);
-        psVal.setString(2, email);
-        ResultSet rs = psVal.executeQuery();
-        
-        if (rs.next() && rs.getInt(1) > 0) {
-            JOptionPane.showMessageDialog(null, "Ya existe un fan con ese teléfono o email.");
-            return;
+        String valSql = "SELECT Telefono, Email FROM Usuario.Fan WHERE Telefono = ? OR Email = ?;";
+        try (PreparedStatement psVal = conn.prepareStatement(valSql)) {
+            psVal.setString(1, telefono);
+            psVal.setString(2, email);
+            try (ResultSet rs = psVal.executeQuery()) {
+                if (rs.next()) {
+                    String telBD = rs.getString("Telefono");
+                    String emailBD = rs.getString("Email");
+                    
+                    if (telefono.equals(telBD)) {
+                        JOptionPane.showMessageDialog(null, "El número de teléfono ya está registrado con otro fan.", 
+                                "Datos Duplicados", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    if (email.equalsIgnoreCase(emailBD)) {
+                        JOptionPane.showMessageDialog(null, "El email ya está registrado con otro fan.", 
+                                "Datos Duplicados", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                }
+            }
         }
 
         // Inserción
@@ -252,7 +264,7 @@ public class Fan extends javax.swing.JFrame {
         ps.setDate(4, fechaRegistro);
         
         ps.executeUpdate();
-        JOptionPane.showMessageDialog(null, "Registro exitoso");
+        //JOptionPane.showMessageDialog(null, "Registro exitoso");
         cargarFans();
         limpiarCampos();
         
@@ -270,8 +282,9 @@ public class Fan extends javax.swing.JFrame {
     }
 
     long idFan = Long.parseLong(tbFan.getValueAt(fila, 0).toString());
-    int confirm = JOptionPane.showConfirmDialog(null, "¿Está seguro? Se borrarán registros asociados.", "Confirmar", JOptionPane.YES_NO_OPTION);
-
+    int confirm = JOptionPane.YES_OPTION;
+            //showConfirmDialog(null, "¿Está seguro? Se borrarán registros asociados.", "Confirmar", JOptionPane.YES_NO_OPTION);
+    
     if (confirm == JOptionPane.YES_OPTION) {
         Conexion objetoConexion = new Conexion();
         String sql = "DELETE FROM Usuario.Fan WHERE ID_fan = ?;";
@@ -296,24 +309,54 @@ public class Fan extends javax.swing.JFrame {
     }
 
     long idFan = Long.parseLong(tbFan.getValueAt(fila, 0).toString());
-    
+    String nombre = txtNombreFan.getText().trim();
+    String telefono = txtTelefono.getText().trim();
+    String email = txtEmail.getText().trim();
     Conexion objetoConexion = new Conexion();
-    String sql = "UPDATE Usuario.Fan SET NombreFan=?, Telefono=?, Email=? WHERE ID_fan=?;";
-    
-    try (Connection conn = objetoConexion.establecerConexion();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = objetoConexion.establecerConexion()) {
         
-        ps.setString(1, txtNombreFan.getText());
-        ps.setString(2, txtTelefono.getText());
-        ps.setString(3, txtEmail.getText());
-        ps.setLong(4, idFan);
+        // 1. VALIDAR DUPLICADOS EXCLUYENDO EL ID ACTUAL (<> ?)
+        String valSql = "SELECT Telefono, Email FROM Usuario.Fan WHERE (Telefono = ? OR Email = ?) AND ID_fan <> ?;";
+        try (PreparedStatement psVal = conn.prepareStatement(valSql)) {
+            psVal.setString(1, telefono);
+            psVal.setString(2, email);
+            psVal.setLong(3, idFan);
+            
+            try (ResultSet rs = psVal.executeQuery()) {
+                if (rs.next()) {
+                    String telBD = rs.getString("Telefono");
+                    String correoBD = rs.getString("Email");
+                    
+                    if (telefono.equals(telBD)) {
+                        JOptionPane.showMessageDialog(null, "No se puede actualizar: El teléfono ya le pertenece a otro fan.", 
+                                "Datos Duplicados", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    if (email.equalsIgnoreCase(correoBD)) {
+                        JOptionPane.showMessageDialog(null, "No se puede actualizar: El Email ya le pertenece a otro fan.", 
+                                "Datos Duplicados", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // 2. SI PASA LA VALIDACIÓN, PROCEDE CON EL UPDATE
+        String sql = "UPDATE Usuario.Fan SET NombreFan = ?, Telefono = ?, Correo = ? WHERE ID_fan = ?;";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, nombre);
+            ps.setString(2, telefono);
+            ps.setString(3, email);
+            ps.setLong(4, idFan);
+            
+            ps.executeUpdate();
+            //JOptionPane.showMessageDialog(null, "Datos del fan actualizados con éxito.");
+            cargarFans();
+            limpiarCampos();
+        }
         
-        ps.executeUpdate();
-        JOptionPane.showMessageDialog(null, "Actualizado correctamente");
-        cargarFans();
-        limpiarCampos();
     } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Error al modificar: " + e.toString());
+        JOptionPane.showMessageDialog(null, "Error al modificar: " + e.toString(), "Error", JOptionPane.ERROR_MESSAGE);
     }
     }//GEN-LAST:event_btnModActionPerformed
 
