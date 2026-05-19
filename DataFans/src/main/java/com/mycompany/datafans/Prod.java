@@ -4,6 +4,13 @@
  */
 package com.mycompany.datafans;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author Jacky09
@@ -17,8 +24,94 @@ public class Prod extends javax.swing.JFrame {
      */
     public Prod() {
         initComponents();
+        // Configurar JSpinners para que acepten números con valores mínimos de 0
+    nudPrecio.setModel(new javax.swing.SpinnerNumberModel(0.0, 0.0, 1000000.0, 1.0));
+    nudStock.setModel(new javax.swing.SpinnerNumberModel(0, 0, 100000, 1));
+    
+    // Carga de datos inicial
+    cargarTiposProducto();
+    cargarArtistas();
+    cargarProductos();
     }
 
+    private void cargarTiposProducto() {
+    cmbTipo.removeAllItems();
+    String[] tipos = {"Álbum", "Merchandising", "Boletos", "Ropa", "Accesorios", "Edición especial"};
+    for (String t : tipos) {
+        cmbTipo.addItem(t);
+    }
+    cmbTipo.setSelectedIndex(-1); // Inicializar sin selección
+    }
+    
+    private void cargarArtistas() {
+    Conexion objetoConexion = new Conexion();
+    cmbArtista.removeAllItems();
+    
+    String sql = "SELECT ID_artista, Nombre_Artista FROM Usuario.Artista;";
+    
+    try (Connection conn = objetoConexion.establecerConexion();
+         Statement st = conn.createStatement();
+         ResultSet rs = st.executeQuery(sql)) {
+        
+        while (rs.next()) {
+            cmbArtista.addItem(new ComboItem(rs.getLong("ID_artista"), rs.getString("Nombre_Artista")));
+        }
+        cmbArtista.setSelectedIndex(-1); // Inicializar sin selección
+        
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al cargar artistas en el catálogo: " + e.toString(),
+                "Error de Carga", JOptionPane.ERROR_MESSAGE);
+    }
+    }
+    
+    private void cargarProductos() {
+    Conexion objetoConexion = new Conexion();
+    DefaultTableModel modelo = new DefaultTableModel() {
+        @Override
+        public boolean isCellEditable(int row, int column) { return false; }
+    };
+    
+    modelo.addColumn("ID");
+    modelo.addColumn("Artista");
+    modelo.addColumn("ID_artista_oculto");
+    modelo.addColumn("Nombre");
+    modelo.addColumn("Tipo");
+    modelo.addColumn("Precio");
+    modelo.addColumn("Stock");
+    
+    tbProd.setModel(modelo);
+    
+    // Ocultar columna técnica del ID de Artista
+    tbProd.getColumnModel().getColumn(2).setMinWidth(0);
+    tbProd.getColumnModel().getColumn(2).setMaxWidth(0);
+    tbProd.getColumnModel().getColumn(2).setPreferredWidth(0);
+    
+    String sql = "SELECT p.ID_producto, a.Nombre_Artista, p.ID_artista, p.Nombre_producto, "
+               + "p.Tipo_producto, p.Precio, p.Stock "
+               + "FROM Adquisicion.Producto p "
+               + "INNER JOIN Usuario.Artista a ON p.ID_artista = a.ID_artista;";
+               
+    try (Connection conn = objetoConexion.establecerConexion();
+         Statement st = conn.createStatement();
+         ResultSet rs = st.executeQuery(sql)) {
+        
+        while (rs.next()) {
+            Object[] datos = new Object[7];
+            datos[0] = rs.getLong("ID_producto");
+            datos[1] = rs.getString("Nombre_Artista");
+            datos[2] = rs.getLong("ID_artista");
+            datos[3] = rs.getString("Nombre_producto");
+            datos[4] = rs.getString("Tipo_producto");
+            datos[5] = rs.getBigDecimal("Precio");
+            datos[6] = rs.getInt("Stock");
+            modelo.addRow(datos);
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al procesar el listado de productos: " + e.toString(),
+                "Error de Consulta", JOptionPane.ERROR_MESSAGE);
+    }
+}
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -52,6 +145,8 @@ public class Prod extends javax.swing.JFrame {
         jLabel2.setText("Nombre ");
 
         jLabel3.setText("Tipo Producto");
+
+        txtNombre.addActionListener(this::txtNombreActionPerformed);
 
         btnMod.setText("Modificación");
         btnMod.addActionListener(this::btnModActionPerformed);
@@ -145,6 +240,11 @@ public class Prod extends javax.swing.JFrame {
 
             }
         ));
+        tbProd.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tbProdMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(tbProd);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -190,23 +290,216 @@ public class Prod extends javax.swing.JFrame {
 
     private void btnModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModActionPerformed
         // TODO add your handling code here:
+        int fila = tbProd.getSelectedRow();
+    if (fila < 0) {
+        JOptionPane.showMessageDialog(null, "Por favor, seleccione un producto de la lista para modificar.", 
+                "Ninguna Selección", JOptionPane.INFORMATION_MESSAGE);
+        return;
+    }
+    
+    String nombre = txtNombre.getText().trim();
+    String tipo = (cmbTipo.getSelectedItem() != null) ? cmbTipo.getSelectedItem().toString() : "";
+    
+    if (nombre.isEmpty() || tipo.isEmpty() || cmbArtista.getSelectedIndex() == -1) {
+        JOptionPane.showMessageDialog(null, "Existen parámetros requeridos vacíos.", 
+                "Campos Incompletos", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    
+    long idProducto = Long.parseLong(tbProd.getValueAt(fila, 0).toString());
+    long idArtista = ((ComboItem) cmbArtista.getSelectedItem()).getId();
+    double precio = Double.parseDouble(nudPrecio.getValue().toString());
+    int stock = Integer.parseInt(nudStock.getValue().toString());
+    
+    Conexion objetoConexion = new Conexion();
+    try (Connection conn = objetoConexion.establecerConexion()) {
+        conn.setAutoCommit(false);
+        
+        try {
+            // Validar Duplicados Cruzados
+            String sqlVal = "SELECT COUNT(*) FROM Adquisicion.Producto WHERE ID_artista = ? AND Nombre_producto = ? AND Tipo_producto = ? AND ID_producto <> ?;";
+            PreparedStatement psVal = conn.prepareStatement(sqlVal);
+            psVal.setLong(1, idArtista);
+            psVal.setString(2, nombre);
+            psVal.setString(3, tipo);
+            psVal.setLong(4, idProducto);
+            ResultSet rs = psVal.executeQuery();
+            
+            if (rs.next() && rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(null, "Ya existe otro producto registrado con esos mismos detalles.", 
+                        "Conflicto de Duplicados", JOptionPane.WARNING_MESSAGE);
+                conn.rollback();
+                return;
+            }
+            
+            // Actualizar
+            String sqlUpdate = "UPDATE Adquisicion.Producto SET ID_artista = ?, Nombre_producto = ?, Tipo_producto = ?, Precio = ?, Stock = ? WHERE ID_producto = ?;";
+            PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate);
+            psUpdate.setLong(1, idArtista);
+            psUpdate.setString(2, nombre);
+            psUpdate.setString(3, tipo);
+            psUpdate.setDouble(4, precio);
+            psUpdate.setInt(5, stock);
+            psUpdate.setLong(6, idProducto);
+            
+            psUpdate.executeUpdate();
+            conn.commit();
+            
+            //JOptionPane.showMessageDialog(null, "Producto modificado con éxito.");
+            cargarProductos();
+            limpiarCampos();
+            
+        } catch (Exception ex) {
+            conn.rollback();
+            throw ex;
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al modificar: " + e.toString(), 
+                "Error de Operación", JOptionPane.ERROR_MESSAGE);
+    }
     }//GEN-LAST:event_btnModActionPerformed
 
     private void btnAltaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAltaActionPerformed
         // TODO add your handling code here:
+        String nombre = txtNombre.getText().trim();
+    String tipo = (cmbTipo.getSelectedItem() != null) ? cmbTipo.getSelectedItem().toString() : "";
+    
+    if (nombre.isEmpty() || tipo.isEmpty() || cmbArtista.getSelectedIndex() == -1) {
+        JOptionPane.showMessageDialog(null, "Por favor, complete todos los criterios obligatorios del producto.", 
+                "Campos Incompletos", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    
+    long idArtista = ((ComboItem) cmbArtista.getSelectedItem()).getId();
+    double precio = Double.parseDouble(nudPrecio.getValue().toString());
+    int stock = Integer.parseInt(nudStock.getValue().toString());
+    
+    Conexion objetoConexion = new Conexion();
+    try (Connection conn = objetoConexion.establecerConexion()) {
+        // Desactivar Autocommit para controlar manualmente la transacción (Igual al SqlTransaction de C#)
+        conn.setAutoCommit(false);
+        
+        try {
+            // 1. Validar Duplicados
+            String sqlVal = "SELECT COUNT(*) FROM Adquisicion.Producto WHERE ID_artista = ? AND Nombre_producto = ? AND Tipo_producto = ?;";
+            PreparedStatement psVal = conn.prepareStatement(sqlVal);
+            psVal.setLong(1, idArtista);
+            psVal.setString(2, nombre);
+            psVal.setString(3, tipo);
+            ResultSet rs = psVal.executeQuery();
+            
+            if (rs.next() && rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(null, "Este producto ya se encuentra registrado para este artista bajo el mismo tipo.", 
+                        "Producto Duplicado", JOptionPane.WARNING_MESSAGE);
+                conn.rollback();
+                return;
+            }
+            
+            // 2. Insertar si pasa la validación
+            String sqlInsert = "INSERT INTO Adquisicion.Producto (ID_artista, Nombre_producto, Tipo_producto, Precio, Stock) VALUES (?, ?, ?, ?, ?);";
+            PreparedStatement psInsert = conn.prepareStatement(sqlInsert);
+            psInsert.setLong(1, idArtista);
+            psInsert.setString(2, nombre);
+            psInsert.setString(3, tipo);
+            psInsert.setDouble(4, precio);
+            psInsert.setInt(5, stock);
+            
+            psInsert.executeUpdate();
+            conn.commit(); // Guardar cambios de forma segura
+            
+            //JOptionPane.showMessageDialog(null, "Producto registrado correctamente.");
+            cargarProductos();
+            limpiarCampos();
+            
+        } catch (Exception ex) {
+            conn.rollback(); // Deshacer cambios ante anomalías
+            throw ex;
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al guardar el producto: " + e.toString(), 
+                "Error de Operación", JOptionPane.ERROR_MESSAGE);
+    }
     }//GEN-LAST:event_btnAltaActionPerformed
 
     private void btnBajaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBajaActionPerformed
         // TODO add your handling code here:
+        int fila = tbProd.getSelectedRow();
+    if (fila < 0) {
+        JOptionPane.showMessageDialog(null, "Seleccione un registro para eliminar.", 
+                "Ninguna Selección", JOptionPane.INFORMATION_MESSAGE);
+        return;
+    }
+    
+    long idProducto = Long.parseLong(tbProd.getValueAt(fila, 0).toString());
+    int confirm = JOptionPane.showConfirmDialog(null, "¿Está seguro de eliminar este producto del inventario?", 
+            "Confirmar Eliminación", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            
+    if (confirm == JOptionPane.YES_OPTION) {
+        Conexion objetoConexion = new Conexion();
+        String sql = "DELETE FROM Adquisicion.Producto WHERE ID_producto = ?;";
+        
+        try (Connection conn = objetoConexion.establecerConexion();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, idProducto);
+            ps.executeUpdate();
+            
+            //JOptionPane.showMessageDialog(null, "Producto dado de baja con éxito.");
+            cargarProductos();
+            limpiarCampos();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "No se pudo eliminar el artículo. Verifique si está asociado a compras o detalles de ventas activos.\nDetalle: " + e.toString(), 
+                    "Error al Eliminar", JOptionPane.ERROR_MESSAGE);
+        }
+    }
     }//GEN-LAST:event_btnBajaActionPerformed
 
+    private void limpiarCampos() {
+    txtNombre.setText("");
+    cmbTipo.setSelectedIndex(-1);
+    cmbArtista.setSelectedIndex(-1);
+    nudPrecio.setValue(0.0);
+    nudStock.setValue(0);
+    tbProd.clearSelection();
+}
     private void cmbTipoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTipoActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_cmbTipoActionPerformed
 
+    private void txtNombreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNombreActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtNombreActionPerformed
+
+    private void tbProdMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbProdMouseClicked
+        // TODO add your handling code here:
+        int fila = tbProd.getSelectedRow();
+    if (fila >= 0) {
+        txtNombre.setText(tbProd.getValueAt(fila, 3).toString());
+        
+        // Sincronizar Combo de Tipo
+        String tipo = tbProd.getValueAt(fila, 4).toString();
+        cmbTipo.setSelectedItem(tipo);
+        
+        // Sincronizar JSpinners numéricos de forma segura
+        nudPrecio.setValue(Double.parseDouble(tbProd.getValueAt(fila, 5).toString()));
+        nudStock.setValue(Integer.parseInt(tbProd.getValueAt(fila, 6).toString()));
+        
+        // Sincronizar Combo de Artista mediante su ID Oculto
+        long idArtTarget = Long.parseLong(tbProd.getModel().getValueAt(fila, 2).toString());
+        for (int i = 0; i < cmbArtista.getItemCount(); i++) {
+            Object item = cmbArtista.getItemAt(i);
+            if (item instanceof ComboItem && ((ComboItem) item).getId() == idArtTarget) {
+                cmbArtista.setSelectedIndex(i);
+                break;
+            }
+        }
+        }
+    }//GEN-LAST:event_tbProdMouseClicked
+
     /**
      * @param args the command line arguments
      */
+    
+    
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -233,7 +526,7 @@ public class Prod extends javax.swing.JFrame {
     private javax.swing.JButton btnAlta;
     private javax.swing.JButton btnBaja;
     private javax.swing.JButton btnMod;
-    private javax.swing.JComboBox<String> cmbArtista;
+    private javax.swing.JComboBox<ComboItem> cmbArtista;
     private javax.swing.JComboBox<String> cmbTipo;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
