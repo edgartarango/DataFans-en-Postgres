@@ -131,6 +131,8 @@ public class Sus extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         tbSus = new javax.swing.JTable();
 
+        setTitle("Suscripción");
+
         jPanelArt.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Suscripción", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
         jPanelArt.setPreferredSize(new java.awt.Dimension(330, 0));
 
@@ -162,7 +164,7 @@ public class Sus extends javax.swing.JFrame {
                     .addComponent(cmbArt, 0, 160, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelArtLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap(18, Short.MAX_VALUE)
                 .addComponent(btnAlta, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(12, 12, 12)
                 .addComponent(btnBaja, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
