@@ -22,75 +22,62 @@ public class Ben extends javax.swing.JFrame {
      */
     public Ben() {
     initComponents();
+    // Rellenar las opciones del JComboBox fijas
     cargarTipos();
-    cargarMembresias();
+    // Cargar los registros existentes desde la Base de Datos
     cargarBeneficios();
 }
    
    private void cargarTipos() {
     cmbTipo.removeAllItems();
-    cmbTipo.addItem("Descuento");
-    cmbTipo.addItem("Acceso");
-    cmbTipo.addItem("Contenido");
-    cmbTipo.addItem("Interacción");
-    cmbTipo.addItem("Otro");
+    cmbTipo.addItem("Descuentos");
+    cmbTipo.addItem("Promociones");
+    cmbTipo.addItem("Mercancía exclusiva");
+    cmbTipo.addItem("Acceso anticipado");
+    cmbTipo.addItem("Meet & Greet");
     cmbTipo.setSelectedIndex(-1);
 }
 
-   private void cargarMembresias() {
-    cmbMem.removeAllItems();
-    Conexion objetoConexion = new Conexion();
-    String sql =
-        "SELECT m.ID_membresia, m.NombreMembresia || ' - ' || f.NombreFan || ' (' || m.Estado || ')' AS Info " +
-        "FROM Adquisicion.Membresia m " +
-        "INNER JOIN Adquisicion.Suscripcion s ON m.ID_suscripcion = s.ID_suscripcion " +
-        "INNER JOIN Usuario.Fan f ON s.ID_fan = f.ID_fan " +
-        "ORDER BY m.ID_membresia";
- 
-    try (Connection conn = objetoConexion.establecerConexion();
-         Statement st = conn.createStatement();
-         ResultSet rs = st.executeQuery(sql)) {
- 
-        while (rs.next()) {
-            cmbMem.addItem(rs.getLong("ID_membresia") + " - " + rs.getString("Info"));
-        }
-        cmbMem.setSelectedIndex(-1);
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Error al cargar membresías: " + e.toString());
-    }
-}
-   
    private void cargarBeneficios() {
     Conexion objetoConexion = new Conexion();
-    DefaultTableModel modelo = new DefaultTableModel();
-    modelo.addColumn("ID Beneficio");
+    DefaultTableModel modelo = new DefaultTableModel() {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false; // Evita la edición directa en las celdas
+        }
+    };
+    
+    modelo.addColumn("ID");
     modelo.addColumn("Nombre Beneficio");
     modelo.addColumn("Tipo Beneficio");
- 
+    
     jTable1.setModel(modelo);
- 
-    String sql = "SELECT * FROM Adquisicion.Beneficio ORDER BY ID_beneficio";
- 
+    
+    // Ocultar columna técnica ID de la vista del usuario
+    jTable1.getColumnModel().getColumn(0).setMinWidth(0);
+    jTable1.getColumnModel().getColumn(0).setMaxWidth(0);
+    jTable1.getColumnModel().getColumn(0).setPreferredWidth(0);
+    
+    String sql = "SELECT ID_beneficio, NombreBeneficio, TipoBeneficio "
+               + "FROM Adquisicion.Beneficio "
+               + "ORDER BY ID_beneficio;";
+               
     try (Connection conn = objetoConexion.establecerConexion();
          Statement st = conn.createStatement();
          ResultSet rs = st.executeQuery(sql)) {
- 
+         
         while (rs.next()) {
-            Object[] datos = new Object[3];
-            datos[0] = rs.getLong("ID_beneficio");
-            datos[1] = rs.getString("NombreBeneficio");
-            datos[2] = rs.getString("TipoBeneficio");
-            modelo.addRow(datos);
+            Object[] fila = new Object[3];
+            fila[0] = rs.getLong("ID_beneficio");
+            fila[1] = rs.getString("NombreBeneficio");
+            fila[2] = rs.getString("TipoBeneficio");
+            modelo.addRow(fila);
         }
+        
     } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Error al cargar beneficios: " + e.toString());
+        JOptionPane.showMessageDialog(null, "Error al cargar beneficios: " + e.toString(),
+                "Error", JOptionPane.ERROR_MESSAGE);
     }
-}
-   
-   private void limpiarCampos() {
-    txtNombreBen.setText("");
-    cmbTipo.setSelectedIndex(-1);
-    cmbMem.setSelectedIndex(-1);
 }
     /**
      * This method is called from within the constructor to initialize the form.
@@ -106,14 +93,14 @@ public class Ben extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         txtNombreBen = new javax.swing.JTextField();
         cmbTipo = new javax.swing.JComboBox<>();
-        jLabel4 = new javax.swing.JLabel();
-        cmbMem = new javax.swing.JComboBox<>();
         btnMod = new javax.swing.JButton();
         btnAlta = new javax.swing.JButton();
         btnBaja = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
+
+        setTitle("Beneficio");
 
         jPanelArt.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Beneficio", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
         jPanelArt.setPreferredSize(new java.awt.Dimension(330, 0));
@@ -127,7 +114,7 @@ public class Ben extends javax.swing.JFrame {
 
         jLabel3.setText("Tipo Beneficio");
 
-        jLabel4.setText("Membresía");
+        cmbTipo.addActionListener(this::cmbTipoActionPerformed);
 
         btnMod.setText("Modificación");
         btnMod.addActionListener(this::btnModActionPerformed);
@@ -148,20 +135,18 @@ public class Ben extends javax.swing.JFrame {
                     .addGroup(jPanelArtLayout.createSequentialGroup()
                         .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel2)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel4))
+                            .addComponent(jLabel3))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(txtNombreBen)
                             .addComponent(cmbTipo, 0, 201, Short.MAX_VALUE)
-                            .addComponent(cmbMem, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(txtNombreBen)))
                     .addGroup(jPanelArtLayout.createSequentialGroup()
                         .addComponent(btnAlta, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(12, 12, 12)
                         .addComponent(btnBaja, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnMod)))
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addContainerGap(28, Short.MAX_VALUE))
         );
         jPanelArtLayout.setVerticalGroup(
             jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -174,11 +159,7 @@ public class Ben extends javax.swing.JFrame {
                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbTipo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmbMem, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(38, 38, 38)
                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnMod)
                     .addComponent(btnAlta)
@@ -186,7 +167,7 @@ public class Ben extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Tabla Beneficio", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Datos Beneficio", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -229,7 +210,7 @@ public class Ben extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanelArt, javax.swing.GroupLayout.PREFERRED_SIZE, 358, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanelArt, javax.swing.GroupLayout.PREFERRED_SIZE, 380, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -238,180 +219,175 @@ public class Ben extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanelArt, javax.swing.GroupLayout.DEFAULT_SIZE, 367, Short.MAX_VALUE))
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
+            .addComponent(jPanelArt, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 379, Short.MAX_VALUE)
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModActionPerformed
-    int filaMod = jTable1.getSelectedRow();
-    if (filaMod < 0) {
-        JOptionPane.showMessageDialog(null, "Seleccione un beneficio de la tabla.");
+    int fila = jTable1.getSelectedRow();
+    if (fila < 0) {
+        JOptionPane.showMessageDialog(null, "Seleccione un beneficio de la tabla para modificar.",
+                "Ninguna Selección", JOptionPane.INFORMATION_MESSAGE);
         return;
     }
- 
-    String nombreMod = txtNombreBen.getText().trim();
-    String tipoMod   = cmbTipo.getSelectedIndex() != -1 ? cmbTipo.getSelectedItem().toString() : "";
- 
-    if (nombreMod.isEmpty() || tipoMod.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Por favor complete todos los campos:\n\n• Nombre del beneficio\n• Tipo de beneficio");
+    
+    String nombre = txtNombreBen.getText().trim();
+    String tipo = (cmbTipo.getSelectedItem() != null) ? cmbTipo.getSelectedItem().toString() : "";
+    
+    if (nombre.isEmpty() || tipo.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "Complete todos los campos (Nombre y Tipo de beneficio).",
+                "Campos Incompletos", JOptionPane.WARNING_MESSAGE);
         return;
     }
- 
-    long idBenMod = Long.parseLong(jTable1.getValueAt(filaMod, 0).toString());
- 
-    Conexion objConMod = new Conexion();
- 
-    // Validar nombre duplicado excluyendo el registro actual
-    String sqlValMod = "SELECT COUNT(*) FROM Adquisicion.Beneficio WHERE NombreBeneficio = ? AND ID_beneficio <> ?";
-    try (Connection conn = objConMod.establecerConexion();
-         PreparedStatement psVal = conn.prepareStatement(sqlValMod)) {
- 
-        psVal.setString(1, nombreMod);
-        psVal.setLong(2, idBenMod);
-        ResultSet rs = psVal.executeQuery();
-        rs.next();
-        if (rs.getInt(1) > 0) {
-            JOptionPane.showMessageDialog(null, "Ya existe otro beneficio con ese nombre.");
-            return;
+    
+    long idBeneficio = Long.parseLong(jTable1.getValueAt(fila, 0).toString());
+    
+    Conexion objetoConexion = new Conexion();
+    try (Connection conn = objetoConexion.establecerConexion()) {
+        conn.setAutoCommit(false);
+        
+        try {
+            // Validar si existe otro registro idéntico con ID distinto
+            String sqlVal = "SELECT COUNT(*) FROM Adquisicion.Beneficio WHERE NombreBeneficio = ? AND TipoBeneficio = ? AND ID_beneficio <> ?;";
+            PreparedStatement psVal = conn.prepareStatement(sqlVal);
+            psVal.setString(1, nombre);
+            psVal.setString(2, tipo);
+            psVal.setLong(3, idBeneficio);
+            ResultSet rs = psVal.executeQuery();
+            
+            if (rs.next() && rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(null, "Ya existe otro beneficio con ese mismo nombre y tipo.",
+                        "Conflicto de Datos", JOptionPane.WARNING_MESSAGE);
+                conn.rollback();
+                return;
+            }
+            
+            // Actualizar
+            String sqlUpdate = "UPDATE Adquisicion.Beneficio SET NombreBeneficio = ?, TipoBeneficio = ? WHERE ID_beneficio = ?;";
+            PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate);
+            psUpdate.setString(1, nombre);
+            psUpdate.setString(2, tipo);
+            psUpdate.setLong(3, idBeneficio);
+            
+            psUpdate.executeUpdate();
+            conn.commit();
+            
+            JOptionPane.showMessageDialog(null, "Beneficio modificado exitosamente.");
+            cargarBeneficios();
+            limpiarCampos();
+            
+        } catch (Exception ex) {
+            conn.rollback();
+            throw ex;
         }
     } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Error al validar: " + e.toString());
-        return;
-    }
- 
-    String sqlMod = "UPDATE Adquisicion.Beneficio SET NombreBeneficio = ?, TipoBeneficio = ? WHERE ID_beneficio = ?";
-    try (Connection conn = objConMod.establecerConexion();
-         PreparedStatement ps = conn.prepareStatement(sqlMod)) {
- 
-        ps.setString(1, nombreMod);
-        ps.setString(2, tipoMod);
-        ps.setLong(3, idBenMod);
-        ps.executeUpdate();
- 
-        JOptionPane.showMessageDialog(null, "Beneficio modificado correctamente.");
-        cargarBeneficios();
-        limpiarCampos();
- 
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Error al modificar beneficio: " + e.toString());
+        JOptionPane.showMessageDialog(null, "Error al modificar beneficio: " + e.toString(),
+                "Error", JOptionPane.ERROR_MESSAGE);
     }
     }//GEN-LAST:event_btnModActionPerformed
 
     private void btnAltaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAltaActionPerformed
     String nombre = txtNombreBen.getText().trim();
-    String tipo   = cmbTipo.getSelectedIndex() != -1 ? cmbTipo.getSelectedItem().toString() : "";
- 
+    String tipo = (cmbTipo.getSelectedItem() != null) ? cmbTipo.getSelectedItem().toString() : "";
+    
     if (nombre.isEmpty() || tipo.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Por favor complete todos los campos:\n\n• Nombre del beneficio\n• Tipo de beneficio");
+        JOptionPane.showMessageDialog(null, "Complete todos los campos (Nombre y Tipo de beneficio).",
+                "Campos Vacíos", JOptionPane.WARNING_MESSAGE);
         return;
     }
- 
-    Conexion objConAlta = new Conexion();
- 
-    // Validar que no exista el mismo nombre
-    String sqlVal = "SELECT COUNT(*) FROM Adquisicion.Beneficio WHERE NombreBeneficio = ?";
-    try (Connection conn = objConAlta.establecerConexion();
-         PreparedStatement psVal = conn.prepareStatement(sqlVal)) {
- 
-        psVal.setString(1, nombre);
-        ResultSet rs = psVal.executeQuery();
-        rs.next();
-        if (rs.getInt(1) > 0) {
-            JOptionPane.showMessageDialog(null, "Ya existe un beneficio registrado con ese nombre.");
-            return;
-        }
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Error al validar: " + e.toString());
-        return;
-    }
- 
-    // Insertar beneficio
-    String sqlIns = "INSERT INTO Adquisicion.Beneficio (NombreBeneficio, TipoBeneficio) VALUES (?, ?)";
-    try (Connection conn = objConAlta.establecerConexion();
-         PreparedStatement ps = conn.prepareStatement(sqlIns)) {
- 
-        ps.setString(1, nombre);
-        ps.setString(2, tipo);
-        ps.executeUpdate();
- 
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Error al registrar beneficio: " + e.toString());
-        return;
-    }
- 
-    // Si se seleccionó una membresía, vincularla en MembresiaBeneficio
-    if (cmbMem.getSelectedIndex() != -1) {
-        String selMem = cmbMem.getSelectedItem().toString();
-        long idMem = Long.parseLong(selMem.split(" - ")[0].trim());
- 
-        // Obtener el ID del beneficio recién insertado
-        String sqlGetId = "SELECT ID_beneficio FROM Adquisicion.Beneficio WHERE NombreBeneficio = ? ORDER BY ID_beneficio DESC LIMIT 1";
-        try (Connection conn = objConAlta.establecerConexion();
-             PreparedStatement psId = conn.prepareStatement(sqlGetId)) {
- 
-            psId.setString(1, nombre);
-            ResultSet rs = psId.executeQuery();
-            if (rs.next()) {
-                long idBen = rs.getLong("ID_beneficio");
-                String sqlLink = "INSERT INTO Adquisicion.MembresiaBeneficio (ID_membresia, ID_beneficio) VALUES (?, ?)";
-                try (PreparedStatement psLink = conn.prepareStatement(sqlLink)) {
-                    psLink.setLong(1, idMem);
-                    psLink.setLong(2, idBen);
-                    psLink.executeUpdate();
-                }
+    
+    Conexion objetoConexion = new Conexion();
+    try (Connection conn = objetoConexion.establecerConexion()) {
+        conn.setAutoCommit(false); // Manejo controlado de transacciones
+        
+        try {
+            // Validar Duplicidad
+            String sqlVal = "SELECT COUNT(*) FROM Adquisicion.Beneficio WHERE NombreBeneficio = ? AND TipoBeneficio = ?;";
+            PreparedStatement psVal = conn.prepareStatement(sqlVal);
+            psVal.setString(1, nombre);
+            psVal.setString(2, tipo);
+            ResultSet rs = psVal.executeQuery();
+            
+            if (rs.next() && rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(null, "Ya existe un beneficio registrado con ese mismo nombre y tipo.",
+                        "Registro Duplicado", JOptionPane.WARNING_MESSAGE);
+                conn.rollback();
+                return;
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Beneficio registrado, pero no se pudo vincular a la membresía: " + e.toString());
+            
+            // Insertar
+            String sqlInsert = "INSERT INTO Adquisicion.Beneficio (NombreBeneficio, TipoBeneficio) VALUES (?, ?);";
+            PreparedStatement psInsert = conn.prepareStatement(sqlInsert);
+            psInsert.setString(1, nombre);
+            psInsert.setString(2, tipo);
+            
+            psInsert.executeUpdate();
+            conn.commit();
+            
+            JOptionPane.showMessageDialog(null, "Beneficio creado exitosamente.");
+            cargarBeneficios();
+            limpiarCampos();
+            
+        } catch (Exception ex) {
+            conn.rollback();
+            throw ex;
         }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al crear beneficio: " + e.toString(),
+                "Error", JOptionPane.ERROR_MESSAGE);
     }
- 
-    cargarBeneficios();
-    limpiarCampos();
     }//GEN-LAST:event_btnAltaActionPerformed
 
     private void btnBajaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBajaActionPerformed
-    int filaBaja = jTable1.getSelectedRow();
-    if (filaBaja < 0) {
-        JOptionPane.showMessageDialog(null, "Seleccione un beneficio de la tabla.");
+    int fila = jTable1.getSelectedRow();
+    if (fila < 0) {
+        JOptionPane.showMessageDialog(null, "Seleccione un beneficio para eliminar.",
+                "Ninguna Selección", JOptionPane.INFORMATION_MESSAGE);
         return;
     }
- 
-    long idBen = Long.parseLong(jTable1.getValueAt(filaBaja, 0).toString());
- 
-    int confirm = JOptionPane.showConfirmDialog(null,
-        "¿Está seguro de eliminar este beneficio?\nTambién se eliminará su vínculo con membresías.",
-        "Confirmar eliminación", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
- 
-    if (confirm != JOptionPane.YES_OPTION) return;
- 
-    Conexion objConBaja = new Conexion();
-    try (Connection conn = objConBaja.establecerConexion()) {
+    
+    int respuesta = JOptionPane.showConfirmDialog(null, "¿Está seguro de eliminar este beneficio?\nSe removerán sus relaciones asociadas.",
+            "Confirmar eliminación", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            
+    if (respuesta != JOptionPane.YES_OPTION) return;
+    
+    long idBeneficio = Long.parseLong(jTable1.getValueAt(fila, 0).toString());
+    
+    Conexion objetoConexion = new Conexion();
+    try (Connection conn = objetoConexion.establecerConexion()) {
         conn.setAutoCommit(false);
- 
-        // Primero eliminar vínculos en MembresiaBeneficio
-        PreparedStatement psDel1 = conn.prepareStatement(
-            "DELETE FROM Adquisicion.MembresiaBeneficio WHERE ID_beneficio = ?");
-        psDel1.setLong(1, idBen);
-        psDel1.executeUpdate();
- 
-        // Luego eliminar el beneficio
-        PreparedStatement psDel2 = conn.prepareStatement(
-            "DELETE FROM Adquisicion.Beneficio WHERE ID_beneficio = ?");
-        psDel2.setLong(1, idBen);
-        psDel2.executeUpdate();
- 
-        conn.commit();
-        JOptionPane.showMessageDialog(null, "Beneficio eliminado correctamente.");
-        cargarBeneficios();
-        limpiarCampos();
- 
+        
+        try {
+            // 1. Eliminar de la tabla relacional intermedia
+            String sqlDeleteRel = "DELETE FROM Adquisicion.MembresiaBeneficio WHERE ID_beneficio = ?;";
+            try (PreparedStatement psRel = conn.prepareStatement(sqlDeleteRel)) {
+                psRel.setLong(1, idBeneficio);
+                psRel.executeUpdate();
+            }
+            
+            // 2. Eliminar de la tabla base Beneficio
+            String sqlDeleteBen = "DELETE FROM Adquisicion.Beneficio WHERE ID_beneficio = ?;";
+            try (PreparedStatement psBen = conn.prepareStatement(sqlDeleteBen)) {
+                psBen.setLong(1, idBeneficio);
+                psBen.executeUpdate();
+            }
+            
+            conn.commit();
+            JOptionPane.showMessageDialog(null, "Beneficio eliminado exitosamente.");
+            cargarBeneficios();
+            limpiarCampos();
+            
+        } catch (Exception ex) {
+            conn.rollback();
+            throw ex;
+        }
     } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Error al eliminar beneficio: " + e.toString());
+        JOptionPane.showMessageDialog(null, "Error al eliminar beneficio: " + e.toString(),
+                "Error", JOptionPane.ERROR_MESSAGE);
     }
     }//GEN-LAST:event_btnBajaActionPerformed
 
@@ -421,11 +397,24 @@ public class Ben extends javax.swing.JFrame {
 
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
         int fila = jTable1.getSelectedRow();
-        if (fila >= 0) {
+    if (fila >= 0) {
         txtNombreBen.setText(jTable1.getValueAt(fila, 1).toString());
-        cmbTipo.setSelectedItem(jTable1.getValueAt(fila, 2).toString());
-        }
+        
+        String tipo = jTable1.getValueAt(fila, 2).toString();
+        // Sincronizar el JComboBox según el texto plano de la celda
+        cmbTipo.setSelectedItem(tipo);
+    }
     }//GEN-LAST:event_jTable1MouseClicked
+
+    private void limpiarCampos() {
+    txtNombreBen.setText("");
+    cmbTipo.setSelectedIndex(-1);
+    jTable1.clearSelection();
+    }
+    
+    private void cmbTipoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTipoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmbTipoActionPerformed
 
     /**
      * @param args the command line arguments
@@ -456,11 +445,9 @@ public class Ben extends javax.swing.JFrame {
     private javax.swing.JButton btnAlta;
     private javax.swing.JButton btnBaja;
     private javax.swing.JButton btnMod;
-    private javax.swing.JComboBox<String> cmbMem;
     private javax.swing.JComboBox<String> cmbTipo;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanelArt;
     private javax.swing.JScrollPane jScrollPane1;

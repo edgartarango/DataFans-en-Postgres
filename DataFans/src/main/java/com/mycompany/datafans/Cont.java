@@ -4,6 +4,13 @@
  */
 package com.mycompany.datafans;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author Jacky09
@@ -17,6 +24,14 @@ public class Cont extends javax.swing.JFrame {
      */
     public Cont() {
         initComponents();
+        buttonGroup1.add(btnSi);
+        buttonGroup1.add(btnNo);
+        btnNo.setSelected(true); // Selección por defecto (Equivalente al rbNo.Checked = true de C#)
+
+        // Carga de datos inicial
+        cargarArtistas();
+        cargarTiposContenido();
+        cargarContenido();
     }
 
     /**
@@ -46,6 +61,8 @@ public class Cont extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tbCont = new javax.swing.JTable();
+
+        setTitle("Contenido");
 
         jPanelArt.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Contenido", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
         jPanelArt.setPreferredSize(new java.awt.Dimension(330, 0));
@@ -134,7 +151,7 @@ public class Cont extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Tabla Contenido ", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Datos Contenido ", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
 
         tbCont.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -147,6 +164,11 @@ public class Cont extends javax.swing.JFrame {
 
             }
         ));
+        tbCont.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tbContMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(tbCont);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -190,18 +212,251 @@ public class Cont extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void cargarTiposContenido() {
+    cmbTipo.removeAllItems();
+    String[] tipos = {"Video", "Live", "Saludo", "Clip", "Juego", "Behind the Scenes"};
+    for (String t : tipos) {
+        cmbTipo.addItem(t);
+    }
+    cmbTipo.setSelectedIndex(-1); // Inicializar sin selección
+    }
+    
+    private void cargarArtistas() {
+    Conexion objetoConexion = new Conexion();
+    cmbArtista.removeAllItems();
+    
+    String sql = "SELECT ID_artista, Nombre_Artista FROM Usuario.Artista;";
+    
+    try (Connection conn = objetoConexion.establecerConexion();
+         Statement st = conn.createStatement();
+         ResultSet rs = st.executeQuery(sql)) {
+        
+        while (rs.next()) {
+            cmbArtista.addItem(new ComboItem(rs.getLong("ID_artista"), rs.getString("Nombre_Artista")));
+        }
+        cmbArtista.setSelectedIndex(-1);
+        
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al cargar artistas: " + e.toString(),
+                "Error de Carga", JOptionPane.ERROR_MESSAGE);
+    }
+    }
+    
+    private void cargarContenido() {
+    Conexion objetoConexion = new Conexion();
+    DefaultTableModel modelo = new DefaultTableModel() {
+        @Override
+        public boolean isCellEditable(int row, int column) { return false; }
+    };
+    
+    modelo.addColumn("ID Contenido");
+    modelo.addColumn("Título");
+    modelo.addColumn("Tipo Contenido");
+    modelo.addColumn("Exclusivo");
+    modelo.addColumn("ID_artista_oculto");
+    modelo.addColumn("Artista");
+    
+    tbCont.setModel(modelo);
+    
+    // Ocultar columna técnica del ID de Artista
+    tbCont.getColumnModel().getColumn(4).setMinWidth(0);
+    tbCont.getColumnModel().getColumn(4).setMaxWidth(0);
+    tbCont.getColumnModel().getColumn(4).setPreferredWidth(0);
+    
+    String sql = "SELECT c.ID_contenido, c.Titulo, c.TipoContenido, c.Exclusivo, c.ID_artista, a.Nombre_Artista "
+               + "FROM Adquisicion.Contenido c "
+               + "INNER JOIN Usuario.Artista a ON c.ID_artista = a.ID_artista;";
+               
+    try (Connection conn = objetoConexion.establecerConexion();
+         Statement st = conn.createStatement();
+         ResultSet rs = st.executeQuery(sql)) {
+        
+        while (rs.next()) {
+            Object[] datos = new Object[6];
+            datos[0] = rs.getLong("ID_contenido");
+            datos[1] = rs.getString("Titulo");
+            datos[2] = rs.getString("TipoContenido");
+            datos[3] = rs.getString("Exclusivo");
+            datos[4] = rs.getLong("ID_artista");
+            datos[5] = rs.getString("Nombre_Artista");
+            modelo.addRow(datos);
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al cargar contenidos: " + e.toString(),
+                "Error de Consulta", JOptionPane.ERROR_MESSAGE);
+    }
+    }
+    
+    
+    
     private void btnModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModActionPerformed
         // TODO add your handling code here:
+    int fila = tbCont.getSelectedRow();
+    if (fila < 0) {
+        JOptionPane.showMessageDialog(null, "Seleccione un contenido de la lista.", 
+                "Ninguna Selección", JOptionPane.INFORMATION_MESSAGE);
+        return;
+    }
+    
+    String titulo = txtTitulo.getText().trim();
+    String tipo = (cmbTipo.getSelectedItem() != null) ? cmbTipo.getSelectedItem().toString() : "";
+    String exclusivo = btnSi.isSelected() ? "Si" : "No";
+    
+    if (titulo.isEmpty() || tipo.isEmpty() || cmbArtista.getSelectedIndex() == -1) {
+        JOptionPane.showMessageDialog(null, "Complete todos los campos.", 
+                "Campos Incompletos", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    
+    long idContenido = Long.parseLong(tbCont.getValueAt(fila, 0).toString());
+    long idArtista = ((ComboItem) cmbArtista.getSelectedItem()).getId();
+    
+    Conexion objetoConexion = new Conexion();
+    try (Connection conn = objetoConexion.establecerConexion()) {
+        conn.setAutoCommit(false);
+        
+        try {
+            // 🔍 VALIDAR DUPLICADOS CRUZADOS (Considerando la exclusividad en la discriminación)
+            String sqlVal = "SELECT COUNT(*) FROM Adquisicion.Contenido "
+                          + "WHERE ID_artista = ? AND Titulo = ? AND TipoContenido = ? AND Exclusivo = ? AND ID_contenido <> ?;";
+            PreparedStatement psVal = conn.prepareStatement(sqlVal);
+            psVal.setLong(1, idArtista);
+            psVal.setString(2, titulo);
+            psVal.setString(3, tipo);
+            psVal.setString(4, exclusivo);
+            psVal.setLong(5, idContenido);
+            ResultSet rs = psVal.executeQuery();
+            
+            if (rs.next() && rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(null, "Ya existe otro registro con el mismo título, tipo y exclusividad para este artista.", 
+                        "Conflicto de Duplicados", JOptionPane.WARNING_MESSAGE);
+                conn.rollback();
+                return;
+            }
+            
+            // 🟢 ACTUALIZAR
+            String sqlUpdate = "UPDATE Adquisicion.Contenido SET ID_artista = ?, Titulo = ?, TipoContenido = ?, Exclusivo = ? WHERE ID_contenido = ?;";
+            PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate);
+            psUpdate.setLong(1, idArtista);
+            psUpdate.setString(2, titulo);
+            psUpdate.setString(3, tipo);
+            psUpdate.setString(4, exclusivo);
+            psUpdate.setLong(5, idContenido);
+            
+            psUpdate.executeUpdate();
+            conn.commit();
+            
+           // JOptionPane.showMessageDialog(null, "Contenido actualizado correctamente.");
+            cargarContenido();
+            limpiarCampos();
+            
+        } catch (Exception ex) {
+            conn.rollback();
+            throw ex;
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al modificar: " + e.toString(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+    }
     }//GEN-LAST:event_btnModActionPerformed
 
     private void btnAltaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAltaActionPerformed
         // TODO add your handling code here:
+    String titulo = txtTitulo.getText().trim();
+    String tipo = (cmbTipo.getSelectedItem() != null) ? cmbTipo.getSelectedItem().toString() : "";
+    
+    if (titulo.isEmpty() || tipo.isEmpty() || cmbArtista.getSelectedIndex() == -1) {
+        JOptionPane.showMessageDialog(null, "Complete todos los campos obligatorios.", 
+                "Campos Incompletos", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    
+    long idArtista = ((ComboItem) cmbArtista.getSelectedItem()).getId();
+    String exclusivo = btnSi.isSelected() ? "Si" : "No";
+    
+    Conexion objetoConexion = new Conexion();
+    try (Connection conn = objetoConexion.establecerConexion()) {
+        conn.setAutoCommit(false);
+        
+        try {
+            // 🔍 VALIDAR DUPLICADOS (Ahora incluyendo la exclusividad)
+            String sqlVal = "SELECT COUNT(*) FROM Adquisicion.Contenido "
+                          + "WHERE Titulo = ? AND TipoContenido = ? AND ID_artista = ? AND Exclusivo = ?;";
+            PreparedStatement psVal = conn.prepareStatement(sqlVal);
+            psVal.setString(1, titulo);
+            psVal.setString(2, tipo);
+            psVal.setLong(3, idArtista);
+            psVal.setString(4, exclusivo);
+            ResultSet rs = psVal.executeQuery();
+            
+            if (rs.next() && rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(null, "Este contenido ya se encuentra registrado con el mismo estado de exclusividad para este artista.", 
+                        "Contenido Duplicado", JOptionPane.WARNING_MESSAGE);
+                conn.rollback();
+                return;
+            }
+            
+            // 🟢 INSERTAR
+            String sqlInsert = "INSERT INTO Adquisicion.Contenido (ID_artista, Titulo, TipoContenido, Exclusivo) VALUES (?, ?, ?, ?);";
+            PreparedStatement psInsert = conn.prepareStatement(sqlInsert);
+            psInsert.setLong(1, idArtista);
+            psInsert.setString(2, titulo);
+            psInsert.setString(3, tipo);
+            psInsert.setString(4, exclusivo);
+            
+            psInsert.executeUpdate();
+            conn.commit();
+            
+            //JOptionPane.showMessageDialog(null, "Contenido guardado con éxito.");
+            cargarContenido();
+            limpiarCampos();
+            
+        } catch (Exception ex) {
+            conn.rollback();
+            throw ex;
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al guardar el contenido: " + e.toString(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+    }
     }//GEN-LAST:event_btnAltaActionPerformed
 
     private void btnBajaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBajaActionPerformed
         // TODO add your handling code here:
+    int fila = tbCont.getSelectedRow();
+    if (fila < 0) return;
+    
+    long idContenido = Long.parseLong(tbCont.getValueAt(fila, 0).toString());
+    int confirm = JOptionPane.showConfirmDialog(null, "¿Desea eliminar de forma permanente esta publicación?", 
+            "Confirmar Baja", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            
+    if (confirm == JOptionPane.YES_OPTION) {
+        Conexion objetoConexion = new Conexion();
+        String sql = "DELETE FROM Adquisicion.Contenido WHERE ID_contenido = ?;";
+        
+        try (Connection conn = objetoConexion.establecerConexion();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, idContenido);
+            ps.executeUpdate();
+            
+            //JOptionPane.showMessageDialog(null, "Publicación eliminada correctamente.");
+            cargarContenido();
+            limpiarCampos();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "No se pudo borrar el contenido.\nDetalle: " + e.toString(), 
+                    "Error al Eliminar", JOptionPane.ERROR_MESSAGE);
+        }
+    }
     }//GEN-LAST:event_btnBajaActionPerformed
 
+    private void limpiarCampos() {
+    txtTitulo.setText("");
+    cmbTipo.setSelectedIndex(-1);
+    cmbArtista.setSelectedIndex(-1);
+    buttonGroup1.clearSelection(); 
+    btnNo.setSelected(true); // Regresar al valor por defecto
+    tbCont.clearSelection();
+    }
     private void btnSiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSiActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_btnSiActionPerformed
@@ -210,6 +465,35 @@ public class Cont extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_btnNoActionPerformed
 
+    private void tbContMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbContMouseClicked
+        // TODO add your handling code here:
+    int fila = tbCont.getSelectedRow();
+    if (fila >= 0) {
+        txtTitulo.setText(tbCont.getValueAt(fila, 1).toString());
+        
+        // Sincronizar Combo Tipo
+        String tipo = tbCont.getValueAt(fila, 2).toString();
+        cmbTipo.setSelectedItem(tipo);
+        
+        // Sincronizar RadioButtons
+        boolean ex = tbCont.getValueAt(fila, 3).toString().equalsIgnoreCase("Si");
+        btnSi.setSelected(ex);
+        btnNo.setSelected(!ex);
+        
+        // Sincronizar Combo Artista mediante ID Oculto
+        long idArtTarget = Long.parseLong(tbCont.getModel().getValueAt(fila, 4).toString());
+        for (int i = 0; i < cmbArtista.getItemCount(); i++) {
+            Object item = cmbArtista.getItemAt(i);
+            if (item instanceof ComboItem && ((ComboItem) item).getId() == idArtTarget) {
+                cmbArtista.setSelectedIndex(i);
+                break;
+            }
+        }
+    }
+    }//GEN-LAST:event_tbContMouseClicked
+
+    
+    
     /**
      * @param args the command line arguments
      */
@@ -243,7 +527,7 @@ public class Cont extends javax.swing.JFrame {
     private javax.swing.JRadioButton btnSi;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup2;
-    private javax.swing.JComboBox<String> cmbArtista;
+    private javax.swing.JComboBox<ComboItem> cmbArtista;
     private javax.swing.JComboBox<String> cmbTipo;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

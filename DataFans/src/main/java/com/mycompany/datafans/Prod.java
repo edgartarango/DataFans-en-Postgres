@@ -139,6 +139,8 @@ public class Prod extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         tbProd = new javax.swing.JTable();
 
+        setTitle("Producto");
+
         jPanelArt.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Producto", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
         jPanelArt.setPreferredSize(new java.awt.Dimension(330, 0));
 
@@ -227,7 +229,7 @@ public class Prod extends javax.swing.JFrame {
                 .addGap(62, 62, 62))
         );
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Tabla Producto", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Datos Producto", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
 
         tbProd.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
