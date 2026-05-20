@@ -4,11 +4,21 @@
  */
 package com.mycompany.datafans;
 
+import java.sql.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.JOptionPane;
+
+ 
 /**
  *
  * @author Jacky09
  */
 public class MemBen extends javax.swing.JFrame {
+    
+    
+    // Guarda los IDs del registro seleccionado en la tabla
+    private long oldIdMem = -1;
+    private long oldIdBen = -1;
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MemBen.class.getName());
 
@@ -16,9 +26,115 @@ public class MemBen extends javax.swing.JFrame {
      * Creates new form MemBen
      */
     public MemBen() {
-        initComponents();
+    initComponents();
+    cargarMembresias();
+    cargarBeneficios();
+    cargarMemBen();
+}
+    
+    private void cargarMembresias() {
+    cmbMem.removeAllItems();
+    Conexion objetoConexion = new Conexion();
+    String sql =
+        "SELECT M.ID_membresia, " +
+        "M.NombreMembresia || ' - ' || A.Nombre_artista || ' - Suscripción: ' || F.NombreFan AS Descripcion " +
+        "FROM Adquisicion.Membresia M " +
+        "INNER JOIN Adquisicion.Suscripcion S ON M.ID_suscripcion = S.ID_suscripcion " +
+        "INNER JOIN Usuario.Fan F ON S.ID_fan = F.ID_fan " +
+        "INNER JOIN Usuario.Artista A ON S.ID_artista = A.ID_artista " +
+        "ORDER BY M.ID_membresia";
+ 
+    try (Connection conn = objetoConexion.establecerConexion();
+         Statement st = conn.createStatement();
+         ResultSet rs = st.executeQuery(sql)) {
+ 
+        while (rs.next()) {
+            cmbMem.addItem(rs.getLong("ID_membresia") + " | " + rs.getString("Descripcion"));
+        }
+        cmbMem.setSelectedIndex(-1);
+ 
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al cargar membresías: " + e.toString());
     }
-
+}
+    
+    private void cargarBeneficios() {
+    cmbTipo.removeAllItems();
+    Conexion objetoConexion = new Conexion();
+    String sql =
+        "SELECT ID_beneficio, " +
+        "TipoBeneficio || ' - (' || NombreBeneficio || ')' AS BeneficioCompleto " +
+        "FROM Adquisicion.Beneficio " +
+        "ORDER BY ID_beneficio";
+ 
+    try (Connection conn = objetoConexion.establecerConexion();
+         Statement st = conn.createStatement();
+         ResultSet rs = st.executeQuery(sql)) {
+ 
+        while (rs.next()) {
+            cmbTipo.addItem(rs.getLong("ID_beneficio") + " | " + rs.getString("BeneficioCompleto"));
+        }
+        cmbTipo.setSelectedIndex(-1);
+ 
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al cargar beneficios: " + e.toString());
+    }
+}
+    
+    private void cargarMemBen() {
+    Conexion objetoConexion = new Conexion();
+    DefaultTableModel modelo = new DefaultTableModel();
+    modelo.addColumn("ID Membresía");
+    modelo.addColumn("ID Beneficio");
+    modelo.addColumn("Beneficio");
+    modelo.addColumn("Membresía");
+ 
+    tbMemBen.setModel(modelo);
+ 
+    String sql =
+        "SELECT " +
+        "MB.ID_membresia, " +
+        "MB.ID_beneficio, " +
+        "B.TipoBeneficio || ' - (' || B.NombreBeneficio || ')' AS BeneficioCompleto, " +
+        "M.NombreMembresia || ' - ' || A.Nombre_artista || ' - Suscripción: ' || F.NombreFan AS Membresia " +
+        "FROM Adquisicion.MembresiaBeneficio MB " +
+        "INNER JOIN Adquisicion.Beneficio B ON MB.ID_beneficio = B.ID_beneficio " +
+        "INNER JOIN Adquisicion.Membresia M ON MB.ID_membresia = M.ID_membresia " +
+        "INNER JOIN Adquisicion.Suscripcion S ON M.ID_suscripcion = S.ID_suscripcion " +
+        "INNER JOIN Usuario.Fan F ON S.ID_fan = F.ID_fan " +
+        "INNER JOIN Usuario.Artista A ON S.ID_artista = A.ID_artista";
+ 
+    try (Connection conn = objetoConexion.establecerConexion();
+         Statement st = conn.createStatement();
+         ResultSet rs = st.executeQuery(sql)) {
+ 
+        while (rs.next()) {
+            Object[] datos = {
+                rs.getLong("ID_membresia"),
+                rs.getLong("ID_beneficio"),
+                rs.getString("BeneficioCompleto"),
+                rs.getString("Membresia")
+            };
+            modelo.addRow(datos);
+        }
+ 
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al cargar tabla: " + e.toString());
+    }
+}
+    
+    private void limpiarSeleccion() {
+    cmbMem.setSelectedIndex(-1);
+    cmbTipo.setSelectedIndex(-1);
+    oldIdMem = -1;
+    oldIdBen = -1;
+}
+    
+    private long getIdFromCombo(javax.swing.JComboBox<String> combo) {
+    if (combo.getSelectedIndex() == -1) return -1;
+    String seleccion = combo.getSelectedItem().toString();
+    return Long.parseLong(seleccion.split(" \\| ")[0].trim());
+}
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -53,6 +169,11 @@ public class MemBen extends javax.swing.JFrame {
 
             }
         ));
+        tbMemBen.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tbMemBenMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(tbMemBen);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -109,7 +230,7 @@ public class MemBen extends javax.swing.JFrame {
                         .addComponent(btnBaja, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnMod)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
         jPanelArtLayout.setVerticalGroup(
             jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -155,39 +276,198 @@ public class MemBen extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnModActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModActionPerformed
-        // TODO add your handling code here:
+    int filaMod = tbMemBen.getSelectedRow();
+    if (filaMod < 0) {
+        JOptionPane.showMessageDialog(null, "Seleccione un registro de la tabla.");
+        return;
+    }
+ 
+    if (cmbMem.getSelectedIndex() == -1 || cmbTipo.getSelectedIndex() == -1) {
+        JOptionPane.showMessageDialog(null, "Seleccione los nuevos valores en los combos.");
+        return;
+    }
+ 
+    // Valores OLD (fila seleccionada en la tabla)
+    long oldMem = Long.parseLong(tbMemBen.getValueAt(filaMod, 0).toString());
+    long oldBen = Long.parseLong(tbMemBen.getValueAt(filaMod, 1).toString());
+ 
+    // Valores NEW (seleccionados en los combos)
+    long newMem = getIdFromCombo(cmbMem);
+    long newBen = getIdFromCombo(cmbTipo);
+ 
+    Conexion objConMod = new Conexion();
+ 
+    // Validar duplicado excluyendo el registro actual
+    String sqlVal =
+        "SELECT COUNT(*) FROM Adquisicion.MembresiaBeneficio " +
+        "WHERE ID_membresia = ? AND ID_beneficio = ? " +
+        "AND NOT (ID_membresia = ? AND ID_beneficio = ?)";
+ 
+    try (Connection conn = objConMod.establecerConexion();
+         PreparedStatement psVal = conn.prepareStatement(sqlVal)) {
+ 
+        psVal.setLong(1, newMem);
+        psVal.setLong(2, newBen);
+        psVal.setLong(3, oldMem);
+        psVal.setLong(4, oldBen);
+        ResultSet rs = psVal.executeQuery();
+        rs.next();
+        if (rs.getInt(1) > 0) {
+            JOptionPane.showMessageDialog(null, "Ya existe esta relación.");
+            return;
+        }
+ 
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al validar: " + e.toString());
+        return;
+    }
+ 
+    // Actualizar con transacción (igual que en C#)
+    String sqlMod =
+        "UPDATE Adquisicion.MembresiaBeneficio " +
+        "SET ID_membresia = ?, ID_beneficio = ? " +
+        "WHERE ID_membresia = ? AND ID_beneficio = ?";
+ 
+    try (Connection conn = objConMod.establecerConexion()) {
+        conn.setAutoCommit(false);
+        try (PreparedStatement ps = conn.prepareStatement(sqlMod)) {
+            ps.setLong(1, newMem);
+            ps.setLong(2, newBen);
+            ps.setLong(3, oldMem);
+            ps.setLong(4, oldBen);
+            ps.executeUpdate();
+            conn.commit();
+ 
+            cargarMemBen();
+            limpiarSeleccion();
+ 
+        } catch (Exception e) {
+            conn.rollback();
+            JOptionPane.showMessageDialog(null, "Error al modificar: " + e.toString());
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error de conexión: " + e.toString());
+    }
     }//GEN-LAST:event_btnModActionPerformed
 
     private void btnAltaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAltaActionPerformed
-        // TODO add your handling code here:
+    if (cmbMem.getSelectedIndex() == -1 || cmbTipo.getSelectedIndex() == -1) {
+        JOptionPane.showMessageDialog(null, "Seleccione una membresía y un beneficio.");
+        return;
+    }
+ 
+    long idMem = getIdFromCombo(cmbMem);
+    long idBen = getIdFromCombo(cmbTipo);
+ 
+    Conexion objConAlta = new Conexion();
+ 
+    // Validar que no exista ya la relación
+    String sqlVal =
+        "SELECT COUNT(*) FROM Adquisicion.MembresiaBeneficio " +
+        "WHERE ID_membresia = ? AND ID_beneficio = ?";
+ 
+    try (Connection conn = objConAlta.establecerConexion();
+         PreparedStatement psVal = conn.prepareStatement(sqlVal)) {
+ 
+        psVal.setLong(1, idMem);
+        psVal.setLong(2, idBen);
+        ResultSet rs = psVal.executeQuery();
+        rs.next();
+        if (rs.getInt(1) > 0) {
+            JOptionPane.showMessageDialog(null, "Ya existe esta relación entre membresía y beneficio.");
+            return;
+        }
+ 
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al validar: " + e.toString());
+        return;
+    }
+ 
+    // Insertar la relación
+    String sqlIns =
+        "INSERT INTO Adquisicion.MembresiaBeneficio (ID_membresia, ID_beneficio) VALUES (?, ?)";
+ 
+    try (Connection conn = objConAlta.establecerConexion();
+         PreparedStatement ps = conn.prepareStatement(sqlIns)) {
+ 
+        ps.setLong(1, idMem);
+        ps.setLong(2, idBen);
+        ps.executeUpdate();
+ 
+        cargarMemBen();
+        limpiarSeleccion();
+ 
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al registrar relación: " + e.toString());
+    }
     }//GEN-LAST:event_btnAltaActionPerformed
 
     private void btnBajaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBajaActionPerformed
-        // TODO add your handling code here:
+    int filaBaja = tbMemBen.getSelectedRow();
+    if (filaBaja < 0) {
+        JOptionPane.showMessageDialog(null, "Seleccione un registro de la tabla.");
+        return;
+    }
+ 
+    long idMemBaja = Long.parseLong(tbMemBen.getValueAt(filaBaja, 0).toString());
+    long idBenBaja = Long.parseLong(tbMemBen.getValueAt(filaBaja, 1).toString());
+ 
+    int confirm = JOptionPane.showConfirmDialog(null,
+        "¿Está seguro de eliminar esta relación?",
+        "Confirmar eliminación", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+ 
+    if (confirm != JOptionPane.YES_OPTION) return;
+ 
+    Conexion objConBaja = new Conexion();
+    String sqlDel =
+        "DELETE FROM Adquisicion.MembresiaBeneficio " +
+        "WHERE ID_membresia = ? AND ID_beneficio = ?";
+ 
+    try (Connection conn = objConBaja.establecerConexion();
+         PreparedStatement ps = conn.prepareStatement(sqlDel)) {
+ 
+        ps.setLong(1, idMemBaja);
+        ps.setLong(2, idBenBaja);
+        ps.executeUpdate();
+ 
+        cargarMemBen();
+        limpiarSeleccion();
+ 
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al eliminar: " + e.toString());
+    }
     }//GEN-LAST:event_btnBajaActionPerformed
+
+    private void tbMemBenMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbMemBenMouseClicked
+    int fila = tbMemBen.getSelectedRow();
+    if (fila >= 0) {
+        long idMemSel = Long.parseLong(tbMemBen.getValueAt(fila, 0).toString());
+        long idBenSel = Long.parseLong(tbMemBen.getValueAt(fila, 1).toString());
+ 
+        // Seleccionar en cmbMem el item que corresponde al ID
+        for (int i = 0; i < cmbMem.getItemCount(); i++) {
+            long id = Long.parseLong(cmbMem.getItemAt(i).split(" \\| ")[0].trim());
+            if (id == idMemSel) {
+                cmbMem.setSelectedIndex(i);
+                break;
+            }
+        }
+ 
+        // Seleccionar en cmbTipo el item que corresponde al ID
+        for (int i = 0; i < cmbTipo.getItemCount(); i++) {
+            long id = Long.parseLong(cmbTipo.getItemAt(i).split(" \\| ")[0].trim());
+            if (id == idBenSel) {
+                cmbTipo.setSelectedIndex(i);
+                break;
+            }
+        }
+    }
+    }//GEN-LAST:event_tbMemBenMouseClicked
 
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> new MemBen().setVisible(true));
     }
 
