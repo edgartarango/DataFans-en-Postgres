@@ -35,6 +35,22 @@ public class MemCont extends javax.swing.JFrame {
                 cmbMemActionPerformed(evt);
             }
         });
+        aplicarPermisosPorRol();
+    }
+
+    private void aplicarPermisosPorRol() {
+        String rol = Conexion.rolActual;
+        
+        if (rol.equals("Editor")) {
+            // El editor puede dar de Alta y Modificar, pero NO puede dar de Baja (Delete)
+            btnBaja.setEnabled(false);
+        } else if (rol.equals("Lector")) {
+            // El lector SOLO puede consultar. No puede dar de Alta, Baja ni Modificar
+            btnAlta.setEnabled(false);
+            btnBaja.setEnabled(false);
+            btnMod.setEnabled(false);
+        }
+        // Si es "Admin", no entra a ninguna condición y conserva todos los botones activos.
     }
 
     private void cargarMembresias() {
@@ -230,7 +246,7 @@ public class MemCont extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        jPanelArt.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Membresía Contenido", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
+        jPanelArt.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         jPanelArt.setPreferredSize(new java.awt.Dimension(330, 0));
 
         jLabel3.setText("Contenido");
@@ -267,7 +283,7 @@ public class MemCont extends javax.swing.JFrame {
                         .addComponent(btnBaja, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnMod)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
         jPanelArtLayout.setVerticalGroup(
             jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

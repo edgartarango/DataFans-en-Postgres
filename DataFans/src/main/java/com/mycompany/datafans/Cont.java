@@ -32,6 +32,22 @@ public class Cont extends javax.swing.JFrame {
         cargarArtistas();
         cargarTiposContenido();
         cargarContenido();
+        aplicarPermisosPorRol();
+    }
+
+    private void aplicarPermisosPorRol() {
+        String rol = Conexion.rolActual;
+        
+        if (rol.equals("Editor")) {
+            // El editor puede dar de Alta y Modificar, pero NO puede dar de Baja (Delete)
+            btnBaja.setEnabled(false);
+        } else if (rol.equals("Lector")) {
+            // El lector SOLO puede consultar. No puede dar de Alta, Baja ni Modificar
+            btnAlta.setEnabled(false);
+            btnBaja.setEnabled(false);
+            btnMod.setEnabled(false);
+        }
+        // Si es "Admin", no entra a ninguna condición y conserva todos los botones activos.
     }
 
     /**
@@ -64,7 +80,7 @@ public class Cont extends javax.swing.JFrame {
 
         setTitle("Contenido");
 
-        jPanelArt.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Contenido", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
+        jPanelArt.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         jPanelArt.setPreferredSize(new java.awt.Dimension(330, 0));
 
         jLabel2.setText("Título");
@@ -121,7 +137,7 @@ public class Cont extends javax.swing.JFrame {
                                 .addComponent(txtTitulo, javax.swing.GroupLayout.DEFAULT_SIZE, 201, Short.MAX_VALUE)
                                 .addComponent(cmbTipo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(cmbArtista, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
         jPanelArtLayout.setVerticalGroup(
             jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

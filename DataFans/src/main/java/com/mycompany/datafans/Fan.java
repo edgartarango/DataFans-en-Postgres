@@ -23,8 +23,24 @@ public class Fan extends javax.swing.JFrame {
     public Fan() {
         initComponents();
         cargarFans();
+        aplicarPermisosPorRol();
     }
 
+    private void aplicarPermisosPorRol() {
+        String rol = Conexion.rolActual;
+        
+        if (rol.equals("Editor")) {
+            // El editor puede dar de Alta y Modificar, pero NO puede dar de Baja (Delete)
+            btnBaja.setEnabled(false);
+        } else if (rol.equals("Lector")) {
+            // El lector SOLO puede consultar. No puede dar de Alta, Baja ni Modificar
+            btnAlta.setEnabled(false);
+            btnBaja.setEnabled(false);
+            btnMod.setEnabled(false);
+        }
+        // Si es "Admin", no entra a ninguna condición y conserva todos los botones activos.
+    }
+    
     private void cargarFans() {
     Conexion objetoConexion = new Conexion();
     // Definimos el modelo de la tabla
@@ -32,7 +48,7 @@ public class Fan extends javax.swing.JFrame {
     modelo.addColumn("ID Fan");
     modelo.addColumn("Nombre");
     modelo.addColumn("Teléfono");
-    modelo.addColumn("Correo Electrónico");
+    modelo.addColumn("Email");
     modelo.addColumn("Fecha de Registro");
     
     tbFan.setModel(modelo);
@@ -324,14 +340,14 @@ public class Fan extends javax.swing.JFrame {
             try (ResultSet rs = psVal.executeQuery()) {
                 if (rs.next()) {
                     String telBD = rs.getString("Telefono");
-                    String correoBD = rs.getString("Email");
+                    String emailBD = rs.getString("Email");
                     
                     if (telefono.equals(telBD)) {
                         JOptionPane.showMessageDialog(null, "No se puede actualizar: El teléfono ya le pertenece a otro fan.", 
                                 "Datos Duplicados", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
-                    if (email.equalsIgnoreCase(correoBD)) {
+                    if (email.equalsIgnoreCase(emailBD)) {
                         JOptionPane.showMessageDialog(null, "No se puede actualizar: El Email ya le pertenece a otro fan.", 
                                 "Datos Duplicados", JOptionPane.WARNING_MESSAGE);
                         return;
@@ -341,7 +357,7 @@ public class Fan extends javax.swing.JFrame {
         }
 
         // 2. SI PASA LA VALIDACIÓN, PROCEDE CON EL UPDATE
-        String sql = "UPDATE Usuario.Fan SET NombreFan = ?, Telefono = ?, Correo = ? WHERE ID_fan = ?;";
+        String sql = "UPDATE Usuario.Fan SET NombreFan = ?, Telefono = ?, Email = ? WHERE ID_fan = ?;";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nombre);
             ps.setString(2, telefono);
