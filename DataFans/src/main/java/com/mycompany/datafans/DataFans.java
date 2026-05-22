@@ -11,7 +11,7 @@ package com.mycompany.datafans;
 public class DataFans {
 
     public static void main(String[] args) {
-       // Login objetoVista =new Login(); 
+        //Login objetoVista =new Login(); 
         Menu objetoVista = new Menu();
         objetoVista.setVisible(true);
     }

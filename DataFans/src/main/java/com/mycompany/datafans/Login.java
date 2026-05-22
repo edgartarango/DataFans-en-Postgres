@@ -32,8 +32,8 @@ public class Login extends javax.swing.JFrame {
         txtNombre = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         btnIniciar = new javax.swing.JButton();
-        txtNombre1 = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
+        txtContra = new javax.swing.JPasswordField();
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
@@ -53,8 +53,6 @@ public class Login extends javax.swing.JFrame {
         });
         btnIniciar.addActionListener(this::btnIniciarActionPerformed);
 
-        txtNombre1.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-
         jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel3.setText("Contraseña");
 
@@ -67,10 +65,10 @@ public class Login extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(txtNombre, javax.swing.GroupLayout.PREFERRED_SIZE, 202, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2)
-                    .addComponent(txtNombre1, javax.swing.GroupLayout.PREFERRED_SIZE, 202, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3)
-                    .addComponent(btnIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(157, Short.MAX_VALUE))
+                    .addComponent(btnIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtContra, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(163, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -81,9 +79,9 @@ public class Login extends javax.swing.JFrame {
                 .addComponent(txtNombre)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtNombre1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(154, 154, 154)
+                .addGap(18, 18, 18)
+                .addComponent(txtContra, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(142, 142, 142)
                 .addComponent(btnIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(35, 35, 35))
         );
@@ -92,7 +90,41 @@ public class Login extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnIniciarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnIniciarMouseClicked
-        new Menu().setVisible(true);
+        String usuarioIngresado = txtNombre.getText().trim();
+        // Leemos la contraseña desde el JPasswordField (con puntos ocultos)
+        String contraseniaIngresada = new String(txtContra.getPassword()); 
+        
+        if (usuarioIngresado.isEmpty() || contraseniaIngresada.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor, llene todos los campos.");
+            return;
+        }
+        
+        Conexion objetoConexion = new Conexion();
+        
+        // Ejecutamos la validación usando la misma conexión fija
+        boolean esUsuarioValido = objetoConexion.validarUsuarioPorCatalogo(usuarioIngresado, contraseniaIngresada);
+        
+        if (esUsuarioValido) {
+            // --- EXTRA TEMPORAL: Guardar el rol mapeado para congelar/descongelar botones ---
+            String userMin = usuarioIngresado.toLowerCase();
+            if (userMin.contains("admin")) {
+                Conexion.rolActual = "Admin";
+            } else if (userMin.contains("editor")) {
+                Conexion.rolActual = "Editor";
+            } else {
+                Conexion.rolActual = "Lector";
+            }
+            // ---------------------------------------------------------------------------------
+            
+            javax.swing.JOptionPane.showMessageDialog(this, "¡Bienvenido! Sesión iniciada con el Rol: " + Conexion.rolActual);
+            
+            // Abrir Menu y cerrar Login
+            new Menu().setVisible(true);
+            this.dispose();
+        } else {
+            // Si no coincide el usuario o la contraseña definida en tu script
+            javax.swing.JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos para el rol especificado.", "Error de Autenticación", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btnIniciarMouseClicked
 
     private void btnIniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIniciarActionPerformed
@@ -129,7 +161,7 @@ public class Login extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JPasswordField txtContra;
     private javax.swing.JTextField txtNombre;
-    private javax.swing.JTextField txtNombre1;
     // End of variables declaration//GEN-END:variables
 }
