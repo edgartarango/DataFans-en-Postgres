@@ -12,7 +12,7 @@ public class ComboItem {
     private long id;
     private String description;
 
-    public ComboItem(long id, String description) {
+    public ComboItem(long par, String description) {
         this.id = id;
         this.description = description;
     }

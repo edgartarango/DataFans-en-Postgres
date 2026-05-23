@@ -28,7 +28,23 @@ public class Compra extends javax.swing.JFrame {
         varConexion = new Conexion();
         CargarFans();
         InicializarTabla();
-        CargarComprasExistentes();
+        CargarComprasExistentes();aplicarPermisosPorRol();
+    }
+
+    private void aplicarPermisosPorRol() {
+        String rol = Conexion.rolActual;
+        
+        if (rol.equals("Editor")) {
+            // El editor puede dar de Alta y Modificar, pero NO puede dar de Baja (Delete)
+            btnBaja.setEnabled(false);
+            //btnDetVen.setEnabled(false);
+        } else if (rol.equals("Lector")) {
+            // El lector SOLO puede consultar. No puede dar de Alta, Baja ni Modificar
+            btnAlta.setEnabled(false);
+            btnBaja.setEnabled(false);
+            btnDetVen.setEnabled(false);
+        }
+        // Si es "Admin", no entra a ninguna condición y conserva todos los botones activos.
     }
     private void InicializarTabla() {
          dtCompras = new DefaultTableModel() {
@@ -65,6 +81,13 @@ public class Compra extends javax.swing.JFrame {
         
         tbCompra.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
+                String rol = Conexion.rolActual;
+        
+        if (rol.equals("Lector")) {
+            // El editor puede dar de Alta y Modificar, pero NO puede dar de Baja (Delete)
+            btnBaja.setEnabled(false);
+            btnDetVen.setEnabled(false);}
+            else
                 btnDetVen.setEnabled(tbCompra.getSelectedRow() != -1);
             }
         });
@@ -319,6 +342,7 @@ public class Compra extends javax.swing.JFrame {
                     "Compra #" + idCompraFinal + " registrada exitosamente\nTotal: " + String.format("$%.2f", totalCompra),
                     "Éxito", JOptionPane.INFORMATION_MESSAGE);
         });
+        
         formDetalle.setVisible(true);
 
     } catch (Exception ex) {
