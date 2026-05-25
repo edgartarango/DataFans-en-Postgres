@@ -19,7 +19,7 @@ public class Menu extends javax.swing.JFrame {
      */
     public Menu() {
         initComponents();
-<<<<<<< HEAD
+
     aplicarPermisosPorRol();
     }
 
@@ -27,7 +27,10 @@ public class Menu extends javax.swing.JFrame {
         String rol = Conexion.rolActual;
         
         if (rol.equals("Editor")) {
-            new Pago().setVisible(false);
+            //new Pago().setVisible(false);
+             javax.swing.DefaultComboBoxModel<String> modelo = 
+            (javax.swing.DefaultComboBoxModel<String>) cmbAdm.getModel();
+        modelo.removeElement("Pago");
             // El editor puede dar de Alta y Modificar, pero NO puede dar de Baja (Delete)
            // btnBaja.setEnabled(false);
         } else if (rol.equals("Lector")) {
@@ -37,13 +40,12 @@ public class Menu extends javax.swing.JFrame {
            // btnMod.setEnabled(false);
         }
         // Si es "Admin", no entra a ninguna condición y conserva todos los botones activos.
-=======
+
         
         //aplicarPermisosPorRolMenu();
         
     Conexion objetoConexion = new Conexion();
-        
->>>>>>> 256d6daea6bd9d0d26ae7ebe954c6fa9bd2faa3d
+
     }
         
     
@@ -234,7 +236,7 @@ public class Menu extends javax.swing.JFrame {
     }//GEN-LAST:event_cmbUsuariosMouseClicked
 
     private void cmbAdmActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbAdmActionPerformed
-        String seleccion = cmbAdm.getSelectedItem().toString();
+        /*String seleccion = cmbAdm.getSelectedItem().toString();
 
         switch (seleccion) {
         case "Compra" -> {
@@ -242,27 +244,20 @@ public class Menu extends javax.swing.JFrame {
             }
 
         case "Pago" -> {
-            String rol = Conexion.rolActual;
-            if (rol.equals("Editor")) {
-        // Recorremos el combo cmbAdq de atrás hacia adelante para remover de forma segura
-        for (int i = cmbAdq.getItemCount() - 1; i >= 0; i--) {
-            Object item = cmbAdq.getItemAt(i);
-            if (item != null) {
-                String textoItem = item.toString().toLowerCase();
-                // Si el ítem contiene la palabra clave 'pago', lo eliminamos
-                if (textoItem.contains("Pago")) {
-                    cmbAdq.removeItemAt(i);
-                }
-            }
-        }
-            }
-            else 
-            new Pago().setVisible(true);
-            }
+    String rol = Conexion.rolActual;
+    if (rol.equals("Editor") ) {
+        
+        javax.swing.JOptionPane.showMessageDialog(this, 
+            "No tienes permiso para acceder a Pago.");
+        cmbAdm.setSelectedIndex(-1);
+    } else {
+        new Pago().setVisible(true);
+    }
+}
 
         default -> {
             }
-        }
+        }*/
     }//GEN-LAST:event_cmbAdmActionPerformed
 
     private void cmbRepActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRepActionPerformed

@@ -331,7 +331,12 @@ public class Compra extends javax.swing.JFrame {
 
     private void btnDetVenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDetVenActionPerformed
         int selectedRow = tbCompra.getSelectedRow();
-    if (selectedRow == -1) {
+    if (Conexion.rolActual.equals("Lector")) {
+        javax.swing.JOptionPane.showMessageDialog(this, 
+            "No tienes permiso para acceder a Detalle Compra.");
+        return;
+    }
+        if (selectedRow == -1) {
         JOptionPane.showMessageDialog(this, "Seleccione una compra para ver sus detalles",
                 "Validación", JOptionPane.WARNING_MESSAGE);
         return;

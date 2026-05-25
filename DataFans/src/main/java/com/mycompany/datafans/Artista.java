@@ -65,7 +65,7 @@ public class Artista extends javax.swing.JFrame {
 
         setTitle("Artista");
 
-        jPanelArt.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Artista", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
+        jPanelArt.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         jPanelArt.setPreferredSize(new java.awt.Dimension(330, 0));
 
         jLabel2.setText("Nombre Artista");
@@ -107,7 +107,7 @@ public class Artista extends javax.swing.JFrame {
                 .addComponent(btnBaja, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(btnMod)
-                .addGap(0, 14, Short.MAX_VALUE))
+                .addGap(0, 22, Short.MAX_VALUE))
         );
         jPanelArtLayout.setVerticalGroup(
             jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
