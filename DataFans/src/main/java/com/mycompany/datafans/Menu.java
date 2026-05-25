@@ -1,3 +1,4 @@
+
 package com.mycompany.datafans;
 
 /*
@@ -18,6 +19,7 @@ public class Menu extends javax.swing.JFrame {
      */
     public Menu() {
         initComponents();
+<<<<<<< HEAD
     aplicarPermisosPorRol();
     }
 
@@ -35,7 +37,18 @@ public class Menu extends javax.swing.JFrame {
            // btnMod.setEnabled(false);
         }
         // Si es "Admin", no entra a ninguna condición y conserva todos los botones activos.
+=======
+        
+        //aplicarPermisosPorRolMenu();
+        
+    Conexion objetoConexion = new Conexion();
+        
+>>>>>>> 256d6daea6bd9d0d26ae7ebe954c6fa9bd2faa3d
     }
+        
+    
+    
+    // Si es Admin conserva todas las opciones de los JComboBox intactas.
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -53,11 +66,14 @@ public class Menu extends javax.swing.JFrame {
         jLbl = new javax.swing.JLabel();
         jLblAdm = new javax.swing.JLabel();
         jLblAdq = new javax.swing.JLabel();
+        cmbRep = new javax.swing.JComboBox<>();
+        jLblAdm1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         cmbUsuarios.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         cmbUsuarios.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Fan", "Artista" }));
+        cmbUsuarios.setSelectedIndex(-1);
         cmbUsuarios.setToolTipText("Fan");
         cmbUsuarios.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -68,10 +84,12 @@ public class Menu extends javax.swing.JFrame {
 
         cmbAdm.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         cmbAdm.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Compra", "Pago" }));
+        cmbAdm.setSelectedIndex(-1);
         cmbAdm.addActionListener(this::cmbAdmActionPerformed);
 
         cmbAdq.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         cmbAdq.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Suscripción", "Membresía", "Beneficio", "Membresía Beneficio", "Contenido", "Membresía Contenido", "Producto" }));
+        cmbAdq.setSelectedIndex(-1);
         cmbAdq.addActionListener(this::cmbAdqActionPerformed);
 
         jLbl.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
@@ -83,6 +101,14 @@ public class Menu extends javax.swing.JFrame {
         jLblAdq.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLblAdq.setText("Adquisición");
 
+        cmbRep.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        cmbRep.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Reporte 1", "Reporte 2" }));
+        cmbRep.setSelectedIndex(-1);
+        cmbRep.addActionListener(this::cmbRepActionPerformed);
+
+        jLblAdm1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        jLblAdm1.setText("Reportes");
+
         javax.swing.GroupLayout jPanelMenuLayout = new javax.swing.GroupLayout(jPanelMenu);
         jPanelMenu.setLayout(jPanelMenuLayout);
         jPanelMenuLayout.setHorizontalGroup(
@@ -90,16 +116,20 @@ public class Menu extends javax.swing.JFrame {
             .addGroup(jPanelMenuLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanelMenuLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cmbUsuarios, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLbl))
-                .addGap(18, 18, 18)
-                .addGroup(jPanelMenuLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cmbAdq, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLblAdq))
-                .addGap(18, 18, 18)
-                .addGroup(jPanelMenuLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(cmbAdm, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLblAdm))
+                    .addComponent(cmbRep, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLblAdm1)
+                    .addGroup(jPanelMenuLayout.createSequentialGroup()
+                        .addGroup(jPanelMenuLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(cmbUsuarios, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLbl))
+                        .addGap(18, 18, 18)
+                        .addGroup(jPanelMenuLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(cmbAdq, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLblAdq))
+                        .addGap(18, 18, 18)
+                        .addGroup(jPanelMenuLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(cmbAdm, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLblAdm))))
                 .addContainerGap(29, Short.MAX_VALUE))
         );
         jPanelMenuLayout.setVerticalGroup(
@@ -115,7 +145,11 @@ public class Menu extends javax.swing.JFrame {
                     .addComponent(cmbAdm, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbUsuarios, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbAdq, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(249, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 132, Short.MAX_VALUE)
+                .addComponent(jLblAdm1, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmbRep, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(51, 51, 51))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -208,6 +242,21 @@ public class Menu extends javax.swing.JFrame {
             }
 
         case "Pago" -> {
+            String rol = Conexion.rolActual;
+            if (rol.equals("Editor")) {
+        // Recorremos el combo cmbAdq de atrás hacia adelante para remover de forma segura
+        for (int i = cmbAdq.getItemCount() - 1; i >= 0; i--) {
+            Object item = cmbAdq.getItemAt(i);
+            if (item != null) {
+                String textoItem = item.toString().toLowerCase();
+                // Si el ítem contiene la palabra clave 'pago', lo eliminamos
+                if (textoItem.contains("Pago")) {
+                    cmbAdq.removeItemAt(i);
+                }
+            }
+        }
+            }
+            else 
             new Pago().setVisible(true);
             }
 
@@ -215,6 +264,24 @@ public class Menu extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_cmbAdmActionPerformed
+
+    private void cmbRepActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRepActionPerformed
+        // TODO add your handling code here:
+        String seleccion = cmbRep.getSelectedItem().toString();
+
+        switch (seleccion) {
+        case "Reporte 1" -> {
+            new Reporte1().setVisible(true);
+            }
+
+        case "Reporte 2" -> {
+            new Reporte2().setVisible(true);
+            }
+
+        default -> {
+            }
+        }
+    }//GEN-LAST:event_cmbRepActionPerformed
 
     /**
      * @param args the command line arguments
@@ -244,9 +311,11 @@ public class Menu extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbAdm;
     private javax.swing.JComboBox<String> cmbAdq;
+    private javax.swing.JComboBox<String> cmbRep;
     private javax.swing.JComboBox<String> cmbUsuarios;
     private javax.swing.JLabel jLbl;
     private javax.swing.JLabel jLblAdm;
+    private javax.swing.JLabel jLblAdm1;
     private javax.swing.JLabel jLblAdq;
     private javax.swing.JPanel jPanelMenu;
     // End of variables declaration//GEN-END:variables
