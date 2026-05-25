@@ -34,91 +34,107 @@ public class Reporte1 extends javax.swing.JFrame {
         configurarFiltrosIniciales();
         
         // 3. Mostrar el enunciado de la consulta de forma estática en el JTextArea
-        jTextArea1.setText("Consulta 1:\n"
-                + "Enunciado:\nConsultar la cantidad total de fans que poseen una membresía, "
-                + "filtrado por el Estado de pago/suscripción y agrupado/filtrado por "
-                + "la Duración (Tipo) de la membresía.");
+        jTextArea1.setText("\n"
+                + "\n Obtiene la cantidad total de fans que poseen una  \n"
+                + "membresía, eligiendo el estado y su duración. \n"
+                );
         jTextArea1.setEditable(false);
     }
 
     private void inicializarEstructuraTabla() {
-        modelo.addColumn("Nombre de Membresía");
-        modelo.addColumn("Cantidad de Fans");
-        tbR1.setModel(modelo);
+        modelo.addColumn("Duración");
+    modelo.addColumn("Estado");
+    modelo.addColumn("Cantidad de Fans");
+    tbR1.setModel(modelo);
     }
     
     private void configurarFiltrosIniciales() {
         cmbEdo.removeAllItems();
-        // Asignamos IDs numéricos únicos (long) representativos para los estados
-        cmbEdo.addItem(new ComboItem(1L, "Activo"));
-        cmbEdo.addItem(new ComboItem(2L, "Pago Pendiente"));
+    // Agregamos opción "Todos" con ID 0
+    cmbEdo.addItem(new ComboItem(0L, "Todos"));
+    cmbEdo.addItem(new ComboItem(1L, "Activa"));
+    cmbEdo.addItem(new ComboItem(2L, "Pago Pendiente"));
 
-        cmbTipo.removeAllItems();
-        // Asignamos IDs numéricos únicos (long) para las duraciones
-        cmbTipo.addItem(new ComboItem(1L, "Mensual"));
-        cmbTipo.addItem(new ComboItem(2L, "Anual"));
+    cmbTipo.removeAllItems();
+    // Agregamos opción "Todos" con ID 0
+    cmbTipo.addItem(new ComboItem(0L, "Todos"));
+    cmbTipo.addItem(new ComboItem(1L, "Mensual"));
+    cmbTipo.addItem(new ComboItem(2L, "Anual"));
     }
 
     /**
      * Este es el método que se ejecutará al presionar el botón Ejecutar
      */
     private void ejecutarConsultaReporte() {
-        Conexion objetoConexion = new Conexion();
+       Conexion objetoConexion = new Conexion();
+    
+    modelo.setRowCount(0);
+    
+    Object itemEstadoSelected = cmbEdo.getSelectedItem();
+    Object itemTipoSelected = cmbTipo.getSelectedItem();
+    
+    if (itemEstadoSelected == null || itemTipoSelected == null) {
+        JOptionPane.showMessageDialog(this, "Por favor seleccione filtros válidos.");
+        return;
+    }
+    
+    ComboItem itemEstado = (ComboItem) itemEstadoSelected;
+    ComboItem itemTipo = (ComboItem) itemTipoSelected;
+    
+    String filtroEstado = itemEstado.toString();
+    String filtroDuracion = itemTipo.toString();
+    
+    // Construimos la consulta base
+    String sql = "SELECT m.Duracion, m.Estado, COUNT(DISTINCT f.ID_fan) AS TotalFans "
+               + "FROM Usuario.Fan f "
+               + "INNER JOIN Adquisicion.Suscripcion s ON f.ID_fan = s.ID_fan "
+               + "INNER JOIN Adquisicion.Membresia m ON s.ID_suscripcion = m.ID_suscripcion "
+               + "WHERE 1=1 "; // Condición siempre verdadera para facilitar la concatenación
+    
+    // Agregamos filtros solo si no es "Todos"
+    if (!filtroEstado.equals("Todos")) {
+        sql += "AND m.Estado = ? ";
+    }
+    if (!filtroDuracion.equals("Todos")) {
+        sql += "AND m.Duracion = ? ";
+    }
+    
+    sql += "GROUP BY m.Duracion, m.Estado ORDER BY m.Duracion, m.Estado";
+    
+    try (Connection conn = objetoConexion.establecerConexion();
+         PreparedStatement pst = conn.prepareStatement(sql)) {
         
-        // Limpiamos las filas manteniendo las columnas que inicializamos en el constructor
-        modelo.setRowCount(0);
+        int paramIndex = 1;
         
-        // Recuperamos los filtros seleccionados mediante tu clase ComboItem
-        Object itemEstadoSelected = cmbEdo.getSelectedItem();
-        Object itemTipoSelected = cmbTipo.getSelectedItem();
-        
-        if (itemEstadoSelected == null || itemTipoSelected == null) {
-            JOptionPane.showMessageDialog(this, "Por favor seleccione filtros válidos.");
-            return;
+        // Establecemos parámetros según cuales filtros estén activos
+        if (!filtroEstado.equals("Todos")) {
+            pst.setString(paramIndex++, filtroEstado);
+        }
+        if (!filtroDuracion.equals("Todos")) {
+            pst.setString(paramIndex++, filtroDuracion);
         }
         
-        // Casteos seguros a tu clase ComboItem
-        ComboItem itemEstado = (ComboItem) itemEstadoSelected;
-        ComboItem itemTipo = (ComboItem) itemTipoSelected;
-        
-        // Recuperamos las descripciones de texto para el WHERE de tu SQL basado en Strings
-        String filtroEstado = itemEstado.toString();  // Devuelve la descripción "Activo", "Pago Pendiente"
-        String filtroDuracion = itemTipo.toString();  // Devuelve la descripción "Mensual", "Anual"
-        
-        // Query de Postgres con los parámetros dinámicos marcados con '?'
-        String sql = "SELECT m.NombreMembresia, COUNT(f.ID_fan) AS TotalFans "
-                   + "FROM Usuario.Fan f "
-                   + "INNER JOIN Adquisicion.Suscripcion s ON f.ID_fan = s.ID_fan "
-                   + "INNER JOIN Adquisicion.Membresia m ON s.ID_suscripcion = m.ID_suscripcion "
-                   + "WHERE m.Estado = ? AND m.Duracion = ? "
-                   + "GROUP BY m.NombreMembresia;";
-        
-        try (Connection conn = objetoConexion.establecerConexion();
-             PreparedStatement pst = conn.prepareStatement(sql)) {
+        try (ResultSet rs = pst.executeQuery()) {
+            boolean tieneRegistros = false;
             
-            // Inyectamos las cadenas de texto extraídas limpiamente de los objetos de la interfaz
-            pst.setString(1, filtroEstado);
-            pst.setString(2, filtroDuracion);
-            
-            try (ResultSet rs = pst.executeQuery()) {
-                boolean tieneRegistros = false;
-                
-                while (rs.next()) {
-                    tieneRegistros = true;
-                    Object[] fila = new Object[2];
-                    fila[0] = rs.getString("NombreMembresia");
-                    fila[1] = rs.getInt("TotalFans");
-                    modelo.addRow(fila);
-                }
-                
-                if (!tieneRegistros) {
-                    JOptionPane.showMessageDialog(this, "No se encontraron registros con los filtros seleccionados.");
-                }
+            while (rs.next()) {
+                tieneRegistros = true;
+                Object[] fila = new Object[3];
+                fila[0] = rs.getString("Duracion");
+                fila[1] = rs.getString("Estado");
+                fila[2] = rs.getInt("TotalFans");
+                modelo.addRow(fila);
             }
             
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error al ejecutar el reporte: " + e.getMessage(), "Error SQL", JOptionPane.ERROR_MESSAGE);
+            if (!tieneRegistros) {
+                JOptionPane.showMessageDialog(this, "No se encontraron registros con los filtros seleccionados.");
+            }
         }
+        
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error al ejecutar el reporte: " + e.getMessage(), "Error SQL", JOptionPane.ERROR_MESSAGE);
+        e.printStackTrace();
+    }
     }
                                         
 
@@ -154,6 +170,8 @@ public class Reporte1 extends javax.swing.JFrame {
         jLabel2.setText("Estado");
 
         jLabel3.setText("Duración");
+
+        cmbEdo.addActionListener(this::cmbEdoActionPerformed);
 
         btnEjecutar.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         btnEjecutar.setText("Ejecutar");
@@ -277,6 +295,10 @@ public class Reporte1 extends javax.swing.JFrame {
     private void tbR1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbR1MouseClicked
         
     }//GEN-LAST:event_tbR1MouseClicked
+
+    private void cmbEdoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbEdoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmbEdoActionPerformed
 
     /**
      * @param args the command line arguments

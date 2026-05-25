@@ -31,10 +31,10 @@ public class Reporte2 extends javax.swing.JFrame {
         cargarComboArtistas();
         
         // 3. Configurar el enunciado descriptivo del reporte
-        jTextArea2.setText("Consulta 2:\n"
-                + "Enunciado:\nConsultar la lista de Fans registrados que están vinculados "
-                + "mediante una suscripción al Artista seleccionado en la interfaz, "
-                + "restringiendo los resultados con una subconsulta interna.");
+        jTextArea2.setText("\n"
+                + "Obtiene la lista de Fans registrados que esten vinculados "
+                + "\n mediante una suscripción a un Artista \n seleccionado. "
+                );
         jTextArea2.setEditable(false);
     }
 
@@ -48,8 +48,7 @@ public class Reporte2 extends javax.swing.JFrame {
     
     private void cargarComboArtistas() {
         Conexion objetoConexion = new Conexion();
-    // Ajustado a 'Nombre_artista' según tu script de BD
-    String sql = "SELECT ID_artista, Nombre_artista FROM Usuario.Artista ORDER BY Nombre_artista ASC;";
+    String sql = "SELECT ID_artista, Nombre_artista FROM Usuario.Artista ORDER BY Nombre_artista ASC";
     
     cmbArtista.removeAllItems();
     
@@ -59,24 +58,36 @@ public class Reporte2 extends javax.swing.JFrame {
         
         int contador = 0;
         while (rs.next()) {
+            // Asegúrate de que el ID no sea nulo
             long id = rs.getLong("ID_artista");
             String nombre = rs.getString("Nombre_artista");
             
-            // Agregamos usando tu constructor: ComboItem(long, String)
-            cmbArtista.addItem(new ComboItem(id, nombre));
-            contador++;
+            // Depuración: Imprimir cada artista cargado
+            System.out.println("Cargando artista: ID=" + id + ", Nombre=" + nombre);
+            
+            // Verificar que el ID sea válido (mayor que 0)
+            if (id > 0) {
+                cmbArtista.addItem(new ComboItem(id, nombre));
+                contador++;
+            } else {
+                System.out.println("ADVERTENCIA: Artista con ID inválido: " + id);
+            }
         }
         
-        // Rastreo en consola para verificar si Java realmente está leyendo la tabla Artista
         System.out.println(">> [DEBUG] Artistas cargados en el combo: " + contador);
+        
+        // Si no hay artistas, mostrar mensaje
+        if (contador == 0) {
+            JOptionPane.showMessageDialog(this, "No se encontraron artistas en la base de datos.");
+        }
         
     } catch (Exception e) {
         JOptionPane.showMessageDialog(this, "Error al cargar los artistas: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        e.printStackTrace();
     }
     }
     
     private void ejecutarReporteSubconsulta() {
-    // Limpiamos las filas previas manteniendo los encabezados intactos
     modeloTabla.setRowCount(0);
     
     Conexion objetoConexion = new Conexion();
@@ -87,26 +98,26 @@ public class Reporte2 extends javax.swing.JFrame {
         return;
     }
     
-    // Casteamos a tu clase ComboItem
     ComboItem artista = (ComboItem) itemSeleccionado;
-    long idArtista = artista.getId(); 
+    long idArtista = artista.getId();
     
-    // Impresión de control para validar qué ID se está mandando al query
-    System.out.println(">> [DEBUG] Buscando suscripciones para el id_artista: " + idArtista + " (" + artista + ")");
+    // IMPORTANTE: Usa los mismos nombres de columnas que en tu BD
+    // Pueden ser: ID_fan, NombreFan, Telefono, Email (con mayúsculas)
+    String sql = "SELECT f.ID_fan, f.NombreFan, f.Telefono, f.Email "
+               + "FROM Usuario.Fan f "
+               + "WHERE f.ID_fan IN ( "
+               + "    SELECT s.ID_fan "
+               + "    FROM Adquisicion.Suscripcion s "
+               + "    WHERE s.ID_artista = ? "
+               + ") "
+               + "ORDER BY f.NombreFan";
     
-    // Query reestructurado con la conversión implícita a minúsculas de Postgres
-    String sql = "SELECT f.id_fan, f.nombrefan, f.telefono, f.email "
-               + "FROM usuario.fan f "
-               + "WHERE f.id_fan IN ( "
-               + "    SELECT s.id_fan "
-               + "    FROM adquisicion.suscripcion s "
-               + "    WHERE s.id_artista = ? "
-               + ");";
+    System.out.println("Consultando artista ID: " + idArtista);
+    System.out.println("SQL: " + sql);
     
     try (Connection conn = objetoConexion.establecerConexion();
          PreparedStatement pst = conn.prepareStatement(sql)) {
         
-        // En PostgreSQL, BIGSERIAL/BIGINT equivalen a un Long de Java de manera estricta
         pst.setLong(1, idArtista);
         
         try (ResultSet rs = pst.executeQuery()) {
@@ -116,29 +127,115 @@ public class Reporte2 extends javax.swing.JFrame {
             while (rs.next()) {
                 registrosEncontrados = true;
                 Object[] fila = new Object[4];
-                // Extracción modificada a minúsculas para evitar colapsos del ResultSet
-                fila[0] = rs.getLong("id_fan");
-                fila[1] = rs.getString("nombrefan"); 
-                fila[2] = rs.getString("telefono");  
-                fila[3] = rs.getString("email");     
+                // Usa los mismos nombres que en el SELECT
+                fila[0] = rs.getLong("ID_fan");
+                fila[1] = rs.getString("NombreFan");
+                fila[2] = rs.getString("Telefono");
+                fila[3] = rs.getString("Email");
                 
                 modeloTabla.addRow(fila);
                 filasAgregadas++;
             }
             
-            System.out.println(">> [DEBUG] Filas encontradas y enviadas a la JTable: " + filasAgregadas);
+            System.out.println("Filas agregadas a la tabla: " + filasAgregadas);
             
             if (!registrosEncontrados) {
-                JOptionPane.showMessageDialog(this, "El artista '" + artista + "' no cuenta con fans asociados actualmente.");
+                JOptionPane.showMessageDialog(this, 
+                    "El artista '" + artista + "' no cuenta con fans asociados actualmente.");
             }
         }
         
     } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Error al ejecutar el reporte: " + e.getMessage(), "Error SQL", JOptionPane.ERROR_MESSAGE);
-        e.printStackTrace(); // Esto pintará el error detallado en la consola si colapsa internamente
+        JOptionPane.showMessageDialog(this, 
+            "Error al ejecutar el reporte: " + e.getMessage(), 
+            "Error SQL", JOptionPane.ERROR_MESSAGE);
+        e.printStackTrace();
     }
+    }
+   
+    private void depurarConexion() {
+    Conexion objetoConexion = new Conexion();
+    Object itemSeleccionado = cmbArtista.getSelectedItem();
+    
+    if (itemSeleccionado == null) {
+        System.out.println("No hay artista seleccionado");
+        return;
     }
     
+    ComboItem artista = (ComboItem) itemSeleccionado;
+    long idArtista = artista.getId();
+    
+    System.out.println("=== DEPURACIÓN ===");
+    System.out.println("ID Artista seleccionado: " + idArtista);
+    System.out.println("Nombre Artista: " + artista.toString());
+    
+    // 1. Verificar si el artista existe en la tabla Artista
+    String sqlArtista = "SELECT ID_artista, Nombre_artista FROM Usuario.Artista WHERE ID_artista = ?";
+    
+    try (Connection conn = objetoConexion.establecerConexion();
+         PreparedStatement pst = conn.prepareStatement(sqlArtista)) {
+        
+        pst.setLong(1, idArtista);
+        try (ResultSet rs = pst.executeQuery()) {
+            if (rs.next()) {
+                System.out.println("✓ Artista encontrado en BD: " + rs.getString("Nombre_artista"));
+            } else {
+                System.out.println("✗ Artista NO encontrado en BD");
+            }
+        }
+    } catch (Exception e) {
+        System.out.println("Error verificando artista: " + e.getMessage());
+    }
+    
+    // 2. Verificar si hay suscripciones para ese artista
+    String sqlSuscripciones = "SELECT COUNT(*) as total FROM Adquisicion.Suscripcion WHERE ID_artista = ?";
+    
+    try (Connection conn = objetoConexion.establecerConexion();
+         PreparedStatement pst = conn.prepareStatement(sqlSuscripciones)) {
+        
+        pst.setLong(1, idArtista);
+        try (ResultSet rs = pst.executeQuery()) {
+            if (rs.next()) {
+                int total = rs.getInt("total");
+                System.out.println("Suscripciones encontradas para el artista: " + total);
+            }
+        }
+    } catch (Exception e) {
+        System.out.println("Error verificando suscripciones: " + e.getMessage());
+    }
+    
+    // 3. Verificar la consulta completa con los nombres de columnas exactos
+    String sqlCompleto = "SELECT f.ID_fan, f.NombreFan, f.Telefono, f.Email "
+                       + "FROM Usuario.Fan f "
+                       + "WHERE f.ID_fan IN ( "
+                       + "    SELECT s.ID_fan "
+                       + "    FROM Adquisicion.Suscripcion s "
+                       + "    WHERE s.ID_artista = ? "
+                       + ")";
+    
+    System.out.println("Ejecutando consulta: " + sqlCompleto);
+    
+    try (Connection conn = objetoConexion.establecerConexion();
+         PreparedStatement pst = conn.prepareStatement(sqlCompleto)) {
+        
+        pst.setLong(1, idArtista);
+        
+        try (ResultSet rs = pst.executeQuery()) {
+            int contador = 0;
+            while (rs.next()) {
+                contador++;
+                System.out.println("Fan " + contador + ": ID=" + rs.getLong("ID_fan") + 
+                                 ", Nombre=" + rs.getString("NombreFan"));
+            }
+            System.out.println("Total de fans encontrados: " + contador);
+        }
+    } catch (Exception e) {
+        System.out.println("Error ejecutando consulta completa: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    System.out.println("=== FIN DEPURACIÓN ===");
+}
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -173,6 +270,8 @@ public class Reporte2 extends javax.swing.JFrame {
         jTextArea2.setColumns(20);
         jTextArea2.setLineWrap(true);
         jTextArea2.setRows(5);
+        jTextArea2.setTabSize(15);
+        jTextArea2.setText("Obtiene la lista de Fans registrados que esten vinculados\nmediante una suscripción a un Artista \\n seleccionando.");
         jTextArea2.setToolTipText("");
         jScrollPane2.setViewportView(jTextArea2);
 
@@ -180,9 +279,6 @@ public class Reporte2 extends javax.swing.JFrame {
         jPanelArt.setLayout(jPanelArtLayout);
         jPanelArtLayout.setHorizontalGroup(
             jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanelArtLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane2))
             .addGroup(jPanelArtLayout.createSequentialGroup()
                 .addGap(6, 6, 6)
                 .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -193,13 +289,17 @@ public class Reporte2 extends javax.swing.JFrame {
                 .addContainerGap(59, Short.MAX_VALUE)
                 .addComponent(btnEjecutar, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(47, 47, 47))
+            .addGroup(jPanelArtLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2)
+                .addContainerGap())
         );
         jPanelArtLayout.setVerticalGroup(
             jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanelArtLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbArtista, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -271,14 +371,47 @@ public class Reporte2 extends javax.swing.JFrame {
 
     private void btnEjecutarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEjecutarActionPerformed
         // TODO add your handling code here:
-        ejecutarReporteSubconsulta();
+      
+        depurarConexion();  // Temporal para ver qué pasa
+    ejecutarReporteSubconsulta();
         
     }//GEN-LAST:event_btnEjecutarActionPerformed
 
     private void tbR2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbR2MouseClicked
         
     }//GEN-LAST:event_tbR2MouseClicked
-
+public class ComboItem {
+    private long id;
+    private String descripcion;
+    
+    public ComboItem(long id, String descripcion) {
+        this.id = id;
+        this.descripcion = descripcion;
+    }
+    
+    public long getId() {
+        return id;
+    }
+    
+    public String getDescripcion() {
+        return descripcion;
+    }public String toString() {
+        return descripcion;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        ComboItem that = (ComboItem) obj;
+        return id == that.id;
+    }
+    
+    @Override
+    public int hashCode() {
+        return Long.hashCode(id);
+    }
+}
     /**
      * @param args the command line arguments
      */

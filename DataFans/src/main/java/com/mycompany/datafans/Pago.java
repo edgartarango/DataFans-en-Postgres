@@ -20,18 +20,27 @@ public class Pago extends javax.swing.JFrame {
      * Creates new form Pago
      */
     public Pago() {
-    initComponents();
+      initComponents();
     cargarBancos();
+    cargarMembresiasEnCombo(); // Agregar esta línea
     limpiarInfoMembresia();
     aplicarPermisosPorRol();
+    cmbmem.addActionListener(e -> cargarMembresiaSeleccionada());
+    tbPago.addMouseListener(new java.awt.event.MouseAdapter() {
+    @Override
+    public void mouseClicked(java.awt.event.MouseEvent evt) {
+        tbPagoMouseClicked(evt);
     }
-
+});
+}
+    
     private void aplicarPermisosPorRol() {
         String rol = Conexion.rolActual;
         
         if (rol.equals("Editor")) {
             // El editor puede dar de Alta y Modificar, pero NO puede dar de Baja (Delete)
             btnBaja.setEnabled(false);
+            //btnDetVen.setEnabled(false);
         } else if (rol.equals("Lector")) {
             // El lector SOLO puede consultar. No puede dar de Alta, Baja ni Modificar
             btnAlta.setEnabled(false);
@@ -39,16 +48,46 @@ public class Pago extends javax.swing.JFrame {
             btnMod.setEnabled(false);
         }
         // Si es "Admin", no entra a ninguna condición y conserva todos los botones activos.
+
+        //CargarComprasExistentes();
+        //aplicarPermisosPorRol();
+
     }
-    public Pago(long idMembresiaNueva) {
-        initComponents();
-        cargarBancos();
-        limpiarInfoMembresia();
-        idMembresia = idMembresiaNueva;
-        txtIDMem.setText(String.valueOf(idMembresiaNueva));
-        cargarInfoMembresia(idMembresiaNueva);
-        cargarPagos();
+
+public Pago(long idMembresiaNueva) {
+     initComponents();
+    cargarBancos();
+    cargarMembresiasEnCombo();
+    limpiarInfoMembresia();
+    idMembresia = idMembresiaNueva;
+    
+    // Agregar listener
+    cmbmem.addActionListener(e -> {
+        cargarMembresiaSeleccionada();
+    });
+    
+    // Buscar y seleccionar la membresía
+    for (int i = 0; i < cmbmem.getItemCount(); i++) {
+        Object item = cmbmem.getItemAt(i);
+        if (item instanceof Object[]) {
+            Object[] arr = (Object[]) item;
+            long idEnCombo = (long) arr[0];
+            if (idEnCombo == idMembresiaNueva) {
+                cmbmem.setSelectedIndex(i);
+                break;
+            }
+        }
     }
+    
+    cargarInfoMembresia(String.valueOf(idMembresiaNueva));
+    cargarPagos();
+    tbPago.addMouseListener(new java.awt.event.MouseAdapter() {
+    @Override
+    public void mouseClicked(java.awt.event.MouseEvent evt) {
+        tbPagoMouseClicked(evt);
+    }
+});
+}
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -67,50 +106,150 @@ public class Pago extends javax.swing.JFrame {
     cmbBanco.setSelectedIndex(-1);
 }
     
-    private void cargarInfoMembresia(long idMem) {
+    private static class ItemMembresia {
+    long id;
+    String texto;
+    
+    ItemMembresia(long id, String texto) {
+        this.id = id;
+        this.texto = texto;
+    }
+    
+    @Override
+    public String toString() {
+        return texto;
+    }
+}
+    
+    private void cargarMembresiaSeleccionada() {
+    Object seleccionado = cmbmem.getSelectedItem();
+    if (seleccionado == null || seleccionado.toString().isEmpty()) {
+        limpiarInfoMembresia();
+        tbPago.setModel(new DefaultTableModel());
+        return;
+    }
+    
+    // Si seleccionado es un String vacío (primera opción)
+    if (seleccionado instanceof String && seleccionado.toString().isEmpty()) {
+        limpiarInfoMembresia();
+        tbPago.setModel(new DefaultTableModel());
+        return;
+    }
+    
+    long idMembresiaSeleccionada;
+    if (seleccionado instanceof Object[]) {
+        Object[] item = (Object[]) seleccionado;
+        idMembresiaSeleccionada = (long) item[0];
+    } else {
+        limpiarInfoMembresia();
+        tbPago.setModel(new DefaultTableModel());
+        return;
+    }
+    
+    cargarInfoMembresia(String.valueOf(idMembresiaSeleccionada));
+    cargarPagos();
+}
+    
+    private void cargarMembresiasEnCombo() {
     Conexion objetoConexion = new Conexion();
-    String sql =
-        "SELECT m.ID_membresia, m.NombreMembresia, m.Precio, m.Duracion, " +
-        "m.Fecha_inicio, m.Fecha_fin, m.Estado, f.NombreFan, a.Nombre_artista " +
+    String sql = 
+        "SELECT m.ID_membresia, " +
+        "m.NombreMembresia || ' - [' || a.Nombre_artista || '] - Suscriptor: ' || f.NombreFan AS MembresiaInfo " +
         "FROM Adquisicion.Membresia m " +
         "INNER JOIN Adquisicion.Suscripcion s ON m.ID_suscripcion = s.ID_suscripcion " +
         "INNER JOIN Usuario.Fan f ON s.ID_fan = f.ID_fan " +
         "INNER JOIN Usuario.Artista a ON s.ID_artista = a.ID_artista " +
-        "WHERE m.ID_membresia = ?";
- 
+        "ORDER BY m.ID_membresia";
+    
+    // Usar DefaultComboBoxModel sin tipo genérico
+    javax.swing.DefaultComboBoxModel modelo = new javax.swing.DefaultComboBoxModel();
+    modelo.addElement(""); // Opción vacía por defecto
+    
     try (Connection conn = objetoConexion.establecerConexion();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
- 
-        ps.setLong(1, idMem);
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                lblFan.setText(rs.getString("NombreFan") + " - " + rs.getString("Nombre_artista"));
-                lblTipo.setText(rs.getString("NombreMembresia") + " ($" + rs.getString("Precio") + ") - " + rs.getString("Duracion"));
- 
-                java.sql.Date fi = rs.getDate("Fecha_inicio");
-                java.sql.Date ff = rs.getDate("Fecha_fin");
-                lblInicio.setText(fi != null ? fi.toString() : "No establecida");
-                lblFin.setText(ff != null ? ff.toString() : "No establecida");
- 
-                String estado = rs.getString("Estado");
-                lblEdo.setText(estado);
- 
-                if (estado.equals("Activa")) {
-                    lblEdo.setForeground(java.awt.Color.GREEN.darker());
-                } else if (estado.equals("Pago Pendiente")) {
-                    lblEdo.setForeground(java.awt.Color.ORANGE.darker());
-                } else {
-                    lblEdo.setForeground(java.awt.Color.RED);
-                }
- 
-                btnAlta.setEnabled(estado.equals("Pago Pendiente"));
-            } else {
-                JOptionPane.showMessageDialog(null, "No se encontró la membresía con ID: " + idMem);
-                limpiarInfoMembresia();
-            }
+         PreparedStatement ps = conn.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        
+        while (rs.next()) {
+            long id = rs.getLong("ID_membresia");
+            String texto = rs.getString("MembresiaInfo");
+            // Guardar ID y texto en un arreglo de 2 posiciones
+            Object[] item = new Object[]{id, texto};
+            modelo.addElement(item);
         }
     } catch (Exception e) {
-        JOptionPane.showMessageDialog(null, "Error al cargar membresía: " + e.toString());
+        JOptionPane.showMessageDialog(null, "Error al cargar membresías: " + e.toString());
+    }
+    
+    cmbmem.setModel(modelo);
+    cmbmem.setRenderer(new javax.swing.DefaultListCellRenderer() {
+    @Override
+    public java.awt.Component getListCellRendererComponent(
+            javax.swing.JList<?> list, Object value, int index,
+            boolean isSelected, boolean cellHasFocus) {
+        if (value instanceof Object[]) {
+            value = ((Object[]) value)[1]; // Mostrar solo el texto
+        }
+        return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    }
+});
+}
+    
+    private void cargarInfoMembresia(String idMemStr) {
+    if (idMemStr == null || idMemStr.trim().isEmpty()) {
+        limpiarInfoMembresia();
+        return;
+    }
+    
+    try {
+        long idMem = Long.parseLong(idMemStr);
+        Conexion objetoConexion = new Conexion();
+        String sql =
+            "SELECT m.ID_membresia, m.NombreMembresia, m.Precio, m.Duracion, " +
+            "m.Fecha_inicio, m.Fecha_fin, m.Estado, f.NombreFan, a.Nombre_artista " +
+            "FROM Adquisicion.Membresia m " +
+            "INNER JOIN Adquisicion.Suscripcion s ON m.ID_suscripcion = s.ID_suscripcion " +
+            "INNER JOIN Usuario.Fan f ON s.ID_fan = f.ID_fan " +
+            "INNER JOIN Usuario.Artista a ON s.ID_artista = a.ID_artista " +
+            "WHERE m.ID_membresia = ?";
+     
+        try (Connection conn = objetoConexion.establecerConexion();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+     
+            ps.setLong(1, idMem);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    idMembresia = idMem;
+                    lblFan.setText(rs.getString("NombreFan") + " - " + rs.getString("Nombre_artista"));
+                    lblTipo.setText(rs.getString("NombreMembresia") + " ($" + rs.getString("Precio") + ") - " + rs.getString("Duracion"));
+     
+                    java.sql.Date fi = rs.getDate("Fecha_inicio");
+                    java.sql.Date ff = rs.getDate("Fecha_fin");
+                    lblInicio.setText(fi != null ? fi.toString() : "No establecida");
+                    lblFin.setText(ff != null ? ff.toString() : "No establecida");
+     
+                    String estado = rs.getString("Estado");
+                    lblEdo.setText(estado);
+     
+                    if (estado.equals("Activa")) {
+                        lblEdo.setForeground(java.awt.Color.GREEN.darker());
+                    } else if (estado.equals("Pago Pendiente")) {
+                        lblEdo.setForeground(java.awt.Color.ORANGE.darker());
+                    } else {
+                        lblEdo.setForeground(java.awt.Color.RED);
+                    }
+     
+                    btnAlta.setEnabled(estado.equals("Pago Pendiente"));
+                } else {
+                    JOptionPane.showMessageDialog(null, "No se encontró la membresía con ID: " + idMem);
+                    limpiarInfoMembresia();
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error al cargar membresía: " + e.toString());
+            limpiarInfoMembresia();
+        }
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(null, "ID de membresía inválido.");
         limpiarInfoMembresia();
     }
 }
@@ -145,7 +284,7 @@ public class Pago extends javax.swing.JFrame {
  
     String sql =
         "SELECT p.ID_pago, p.Fecha_pago, p.NumTarjeta, p.Banco, p.Cvv, " +
-        "m.NombreMembresia || ' - ' || a.Nombre_artista || ' - Suscriptor: ' || f.NombreFan || ' (' || m.Estado || ')' AS MembresiaInfo " +
+        "m.NombreMembresia || ' - [' || a.Nombre_artista || '] - Suscriptor: ' || f.NombreFan AS MembresiaInfo  " +
         "FROM Administrativo.Pago p " +
         "INNER JOIN Adquisicion.Membresia m ON p.ID_membresia = m.ID_membresia " +
         "INNER JOIN Adquisicion.Suscripcion s ON m.ID_suscripcion = s.ID_suscripcion " +
@@ -182,33 +321,17 @@ private void limpiarCampos() {
     cmbBanco.setSelectedIndex(-1);
 }
 
-private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {
-    String texto = txtIDMem.getText().trim();
-    if (texto.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Ingrese un ID de membresía.");
-        return;
-    }
-    try {
-        long id = Long.parseLong(texto);
-        idMembresia = id;
-        cargarInfoMembresia(id);
-        cargarPagos();
-    } catch (NumberFormatException e) {
-        JOptionPane.showMessageDialog(null, "El ID debe ser un número.");
-    }
-}
+
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         jPanelArt = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        txtIDMem = new javax.swing.JTextField();
         txtTarjeta = new javax.swing.JTextField();
         btnMod = new javax.swing.JButton();
         btnAlta = new javax.swing.JButton();
         btnBaja = new javax.swing.JButton();
-        btnBuscar = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
         jSeparator2 = new javax.swing.JSeparator();
@@ -226,11 +349,14 @@ private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {
         txtCvv = new javax.swing.JTextField();
         jLabel15 = new javax.swing.JLabel();
         cmbBanco = new javax.swing.JComboBox<>();
+        cmbmem = new javax.swing.JComboBox<>();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tbPago = new javax.swing.JTable();
 
-        jPanelArt.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Registro Pago", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Verdana", 0, 18))); // NOI18N
+        setTitle("Pago");
+
+        jPanelArt.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         jPanelArt.setPreferredSize(new java.awt.Dimension(330, 0));
 
         jLabel2.setText("ID Membresía:");
@@ -245,8 +371,6 @@ private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {
 
         btnBaja.setText("Baja");
         btnBaja.addActionListener(this::btnBajaActionPerformed);
-
-        btnBuscar.setText("Buscar");
 
         jLabel1.setText("Fan:");
 
@@ -274,6 +398,8 @@ private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {
 
         jLabel15.setText("Banco:");
 
+        cmbmem.addActionListener(this::cmbmemActionPerformed);
+
         javax.swing.GroupLayout jPanelArtLayout = new javax.swing.GroupLayout(jPanelArt);
         jPanelArt.setLayout(jPanelArtLayout);
         jPanelArtLayout.setHorizontalGroup(
@@ -287,16 +413,14 @@ private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {
                         .addComponent(btnBaja, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnMod)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addContainerGap(26, Short.MAX_VALUE))
                     .addComponent(jSeparator2)
                     .addGroup(jPanelArtLayout.createSequentialGroup()
                         .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanelArtLayout.createSequentialGroup()
                                 .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtIDMem, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(btnBuscar, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(cmbmem, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(jPanelArtLayout.createSequentialGroup()
                                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel4)
@@ -327,23 +451,23 @@ private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {
                                 .addComponent(jLabel3)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtTarjeta, javax.swing.GroupLayout.PREFERRED_SIZE, 201, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanelArtLayout.createSequentialGroup()
-                                .addComponent(jLabel14)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtCvv, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanelArtLayout.createSequentialGroup()
-                                .addComponent(jLabel15)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(cmbBanco, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                            .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanelArtLayout.createSequentialGroup()
+                                    .addComponent(jLabel14)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(txtCvv))
+                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanelArtLayout.createSequentialGroup()
+                                    .addComponent(jLabel15)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                    .addComponent(cmbBanco, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGap(0, 37, Short.MAX_VALUE))))
         );
         jPanelArtLayout.setVerticalGroup(
             jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanelArtLayout.createSequentialGroup()
                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtIDMem, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnBuscar))
+                    .addComponent(cmbmem, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(5, 5, 5)
                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel4)
@@ -380,7 +504,7 @@ private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {
                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtCvv, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 53, Short.MAX_VALUE)
                 .addGroup(jPanelArtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel15, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbBanco, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -483,9 +607,9 @@ private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {
         ps.executeUpdate();
  
         JOptionPane.showMessageDialog(null, "Pago modificado correctamente.");
-        cargarInfoMembresia(idMembresia);
-        cargarPagos();
-        limpiarCampos();
+    cargarInfoMembresia(String.valueOf(idMembresia)); 
+    cargarPagos();
+    limpiarCampos();
  
     } catch (Exception e) {
         JOptionPane.showMessageDialog(null, "Error al modificar pago: " + e.toString());
@@ -529,9 +653,9 @@ private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {
         ps.executeUpdate();
  
         JOptionPane.showMessageDialog(null, "Pago registrado correctamente.\nLa membresía ahora está Activa.");
-        cargarInfoMembresia(idMembresia);
-        cargarPagos();
-        limpiarCampos();
+    cargarInfoMembresia(String.valueOf(idMembresia));
+    cargarPagos();
+    limpiarCampos();
  
     } catch (Exception e) {
         JOptionPane.showMessageDialog(null, "Error al registrar pago: " + e.toString());
@@ -566,15 +690,19 @@ private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {
         }
  
         conn.commit();
-        JOptionPane.showMessageDialog(null, "Pago eliminado.\nLa membresía volvió a 'Pago Pendiente'.");
-        cargarInfoMembresia(idMembresia);
-        cargarPagos();
-        limpiarCampos();
+    JOptionPane.showMessageDialog(null, "Pago eliminado.\nLa membresía volvió a 'Pago Pendiente'.");
+    cargarInfoMembresia(String.valueOf(idMembresia)); // ✅ Cambiado
+    cargarPagos();
+    limpiarCampos();
  
     } catch (Exception e) {
         JOptionPane.showMessageDialog(null, "Error al eliminar pago: " + e.toString());
     }
     }//GEN-LAST:event_btnBajaActionPerformed
+
+    private void cmbmemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbmemActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmbmemActionPerformed
 
     /**
      * @param args the command line arguments
@@ -613,9 +741,9 @@ private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAlta;
     private javax.swing.JButton btnBaja;
-    private javax.swing.JButton btnBuscar;
     private javax.swing.JButton btnMod;
     private javax.swing.JComboBox<String> cmbBanco;
+    private javax.swing.JComboBox<String> cmbmem;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel14;
@@ -638,7 +766,6 @@ private void btnBuscarActionPerformed(java.awt.event.ActionEvent evt) {
     private javax.swing.JLabel lblTipo;
     private javax.swing.JTable tbPago;
     private javax.swing.JTextField txtCvv;
-    private javax.swing.JTextField txtIDMem;
     private javax.swing.JTextField txtTarjeta;
     // End of variables declaration//GEN-END:variables
 }

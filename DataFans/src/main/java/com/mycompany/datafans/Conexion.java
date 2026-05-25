@@ -17,7 +17,7 @@ public class Conexion {
     String usuario ="postgres";
     String contrasenia = "postgres";
     String ip= "localhost";
-    String bd="datafans";
+    String bd="DataFans";
     String puerto = "5432";
 
     String cadena ="jdbc:postgresql://"+ip+":"+puerto+"/"+bd;
