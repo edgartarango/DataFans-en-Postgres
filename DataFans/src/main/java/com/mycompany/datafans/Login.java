@@ -116,7 +116,7 @@ public class Login extends javax.swing.JFrame {
             }
             // ---------------------------------------------------------------------------------
             
-            javax.swing.JOptionPane.showMessageDialog(this, "¡Bienvenido! Sesión iniciada con el Rol: " + Conexion.rolActual);
+            //javax.swing.JOptionPane.showMessageDialog(this, "¡Bienvenido! Sesión iniciada con el Rol: " + Conexion.rolActual);
             
             // Abrir Menu y cerrar Login
             new Menu().setVisible(true);
