@@ -173,6 +173,7 @@ public class Reporte2 extends javax.swing.JFrame {
         jTextArea2.setColumns(20);
         jTextArea2.setLineWrap(true);
         jTextArea2.setRows(5);
+        jTextArea2.setText("Consultar la lista de Fans registrados que están vinculados \nmediante una suscripción al Artista seleccionado en la interfaz, restringiendo los resultados con una subconsulta interna");
         jTextArea2.setToolTipText("");
         jScrollPane2.setViewportView(jTextArea2);
 

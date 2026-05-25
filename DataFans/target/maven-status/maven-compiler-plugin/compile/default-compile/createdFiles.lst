@@ -6,12 +6,16 @@ com\mycompany\datafans\DetalleCompra$CompraFinalizadaListener.class
 com\mycompany\datafans\MemBen$1.class
 com\mycompany\datafans\Artista$1.class
 com\mycompany\datafans\Prod$2.class
+com\mycompany\datafans\Reporte1$1.class
+com\mycompany\datafans\Reporte1.class
+com\mycompany\datafans\Reporte2$1.class
 com\mycompany\datafans\Compra$1.class
 com\mycompany\datafans\Ben$2.class
 com\mycompany\datafans\Mem$1.class
 com\mycompany\datafans\Ben.class
 com\mycompany\datafans\DetalleCompra$ProductoData.class
 com\mycompany\datafans\Fan$1.class
+com\mycompany\datafans\Reporte2.class
 com\mycompany\datafans\Compra.class
 com\mycompany\datafans\MemBen$2.class
 com\mycompany\datafans\Prod.class
@@ -39,4 +43,3 @@ com\mycompany\datafans\Sus$2.class
 com\mycompany\datafans\Sus.class
 com\mycompany\datafans\Login.class
 com\mycompany\datafans\Artista.class
-com\mycompany\datafans\Pago$1.class

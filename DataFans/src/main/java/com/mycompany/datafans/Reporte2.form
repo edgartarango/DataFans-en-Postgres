@@ -136,6 +136,7 @@
                 <Property name="columns" type="int" value="20"/>
                 <Property name="lineWrap" type="boolean" value="true"/>
                 <Property name="rows" type="int" value="5"/>
+                <Property name="text" type="java.lang.String" value="Consultar la lista de Fans registrados que est&#xe1;n vinculados &#xa;mediante una suscripci&#xf3;n al Artista seleccionado en la interfaz, restringiendo los resultados con una subconsulta interna"/>
                 <Property name="toolTipText" type="java.lang.String" value=""/>
               </Properties>
             </Component>
