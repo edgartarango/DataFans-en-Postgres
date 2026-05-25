@@ -23,32 +23,17 @@ public class Pago extends javax.swing.JFrame {
     initComponents();
     cargarBancos();
     limpiarInfoMembresia();
-    aplicarPermisosPorRol();
-    }
+}
 
-    private void aplicarPermisosPorRol() {
-        String rol = Conexion.rolActual;
-        
-        if (rol.equals("Editor")) {
-            // El editor puede dar de Alta y Modificar, pero NO puede dar de Baja (Delete)
-            btnBaja.setEnabled(false);
-        } else if (rol.equals("Lector")) {
-            // El lector SOLO puede consultar. No puede dar de Alta, Baja ni Modificar
-            btnAlta.setEnabled(false);
-            btnBaja.setEnabled(false);
-            btnMod.setEnabled(false);
-        }
-        // Si es "Admin", no entra a ninguna condición y conserva todos los botones activos.
-    }
-    public Pago(long idMembresiaNueva) {
-        initComponents();
-        cargarBancos();
-        limpiarInfoMembresia();
-        idMembresia = idMembresiaNueva;
-        txtIDMem.setText(String.valueOf(idMembresiaNueva));
-        cargarInfoMembresia(idMembresiaNueva);
-        cargarPagos();
-    }
+public Pago(long idMembresiaNueva) {
+    initComponents();
+    cargarBancos();
+    limpiarInfoMembresia();
+    idMembresia = idMembresiaNueva;
+    txtIDMem.setText(String.valueOf(idMembresiaNueva));
+    cargarInfoMembresia(idMembresiaNueva);
+    cargarPagos();
+}
 
     /**
      * This method is called from within the constructor to initialize the form.

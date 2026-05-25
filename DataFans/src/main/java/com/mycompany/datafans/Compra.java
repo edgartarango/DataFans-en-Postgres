@@ -28,7 +28,9 @@ public class Compra extends javax.swing.JFrame {
         varConexion = new Conexion();
         CargarFans();
         InicializarTabla();
-        CargarComprasExistentes();aplicarPermisosPorRol();
+
+        CargarComprasExistentes();
+        aplicarPermisosPorRol();
     }
 
     private void aplicarPermisosPorRol() {
@@ -45,7 +47,14 @@ public class Compra extends javax.swing.JFrame {
             btnDetVen.setEnabled(false);
         }
         // Si es "Admin", no entra a ninguna condición y conserva todos los botones activos.
+
+        CargarComprasExistentes();
+        //aplicarPermisosPorRol();
+
     }
+
+   
+    
     private void InicializarTabla() {
          dtCompras = new DefaultTableModel() {
             @Override

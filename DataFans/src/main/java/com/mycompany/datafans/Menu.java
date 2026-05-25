@@ -18,6 +18,23 @@ public class Menu extends javax.swing.JFrame {
      */
     public Menu() {
         initComponents();
+    aplicarPermisosPorRol();
+    }
+
+    private void aplicarPermisosPorRol() {
+        String rol = Conexion.rolActual;
+        
+        if (rol.equals("Editor")) {
+            new Pago().setVisible(false);
+            // El editor puede dar de Alta y Modificar, pero NO puede dar de Baja (Delete)
+           // btnBaja.setEnabled(false);
+        } else if (rol.equals("Lector")) {
+            // El lector SOLO puede consultar. No puede dar de Alta, Baja ni Modificar
+            //btnAlta.setEnabled(false);
+            //btnBaja.setEnabled(false);
+           // btnMod.setEnabled(false);
+        }
+        // Si es "Admin", no entra a ninguna condición y conserva todos los botones activos.
     }
 
     /**
